@@ -1,0 +1,115 @@
+You are an expert full-stack engineer.
+
+Build a complete, working full-stack web application called "ResumeTailor".
+The goal is a runnable MVP, not a prototype.
+
+IMPORTANT RULES:
+- The app must run without errors when started.
+- Implement features incrementally and fix issues as they appear.
+- Do not leave TODOs or placeholders.
+- Use Stripe in TEST MODE only (real Stripe API, test keys).
+- Do not mock payments.
+- Keep scope minimal and focused.
+
+--------------------
+CORE FUNCTIONALITY
+--------------------
+1. Authentication
+- Users can sign up, log in, and log out
+- Use session-based authentication (Flask sessions)
+- Passwords must be hashed securely
+
+2. Resume Upload
+- Accept PDF and DOCX files only
+- Extract text from uploaded resumes
+- Enforce reasonable file size limits
+- Store uploaded files locally
+
+3. Resume Tailoring
+- Users select:
+  - Target industry
+  - Target job role
+- Use an abstracted function to call an LLM API
+- API key must be loaded from environment variables
+- Include an example prompt used for resume rewriting
+
+4. Revision Limits
+- Each user gets exactly 3 free resume revisions
+- A "revision" is defined as one successful LLM rewrite request
+- Track revision count per user in the database
+
+5. Payments
+- After 3 revisions, block further edits
+- Redirect user to Stripe Checkout
+- On successful payment:
+  - Unlock additional revisions (define how many)
+  - Persist unlock in database
+- Handle Stripe webhooks correctly
+
+--------------------
+TECH STACK
+--------------------
+Backend:
+- Python
+- Flask
+
+Frontend:
+- Server-rendered HTML
+- Minimal JavaScript
+- Clean, responsive CSS
+
+Database:
+- SQLite
+- SQLAlchemy ORM
+
+Payments:
+- Stripe Checkout (TEST MODE)
+
+--------------------
+DATABASE SCHEMA
+--------------------
+Include tables for:
+- Users
+- Uploaded resumes
+- Revision usage
+- Payments / unlocks
+
+--------------------
+PROJECT STRUCTURE
+--------------------
+Define and follow a clean folder structure:
+- app.py or main.py
+- templates/
+- static/
+- models.py
+- auth routes
+- resume routes
+- payment routes
+
+--------------------
+ERROR HANDLING
+--------------------
+- Validate user input
+- Handle file parsing failures
+- Handle LLM API failures gracefully
+- Prevent unauthorized access to paid features
+
+--------------------
+DELIVERABLES
+--------------------
+1. Fully working application code
+2. Database schema
+3. Setup instructions
+4. Environment variable placeholders
+5. Stripe test instructions
+6. Example resume-tailoring LLM prompt
+7. Minimal but clean UI
+
+--------------------
+EXECUTION INSTRUCTIONS
+--------------------
+After generating the code:
+1. Run the app
+2. Fix any runtime or logic errors
+3. Ensure the full user flow works end-to-end:
+   signup → upload → tailor → revision limit → payment → unlock → continue editing

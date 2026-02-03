@@ -10,39 +10,50 @@ ResumeTailor allows users to:
 - Get 3 free resume revisions
 - Purchase additional revisions via Stripe checkout
 
+### Admin Features
+Administrators have access to a comprehensive dashboard:
+- **Overview**: View usage stats (users, resumes, revisions, payments, revenue)
+- **User Management**: View all users, activate/deactivate accounts
+- **Prompt Testing**: Test AI prompts without affecting production, save versions, activate new prompts
+
 ## Architecture
 
 ### Tech Stack
 - **Frontend**: React with TypeScript, TanStack Query, shadcn/ui, Wouter routing
 - **Backend**: Express.js with TypeScript
 - **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: Session-based with bcrypt password hashing
-- **AI**: OpenAI GPT-4o for resume tailoring
+- **Authentication**: Session-based with bcrypt password hashing, role-based access control
+- **AI**: OpenAI GPT-4o for resume tailoring with premium gamified coach persona
 - **Payments**: Stripe Checkout for purchasing revisions
+- **Logging**: Structured JSON logging for all critical operations
 
 ### Key Files
 
 #### Backend
 - `server/index.ts` - Express server entry point
-- `server/routes.ts` - All API routes (auth, resumes, revisions, payments)
+- `server/routes.ts` - All API routes (auth, resumes, revisions, payments, admin)
 - `server/storage.ts` - Database storage layer with CRUD operations
-- `server/llm.ts` - OpenAI integration for resume tailoring
+- `server/llm.ts` - OpenAI integration for resume tailoring with prompt versioning
 - `server/stripeClient.ts` - Stripe client initialization
 
 #### Frontend
-- `client/src/App.tsx` - Main app with routing and providers
+- `client/src/App.tsx` - Main app with routing, providers, and role-based route guards
 - `client/src/lib/auth.tsx` - Authentication context provider
 - `client/src/pages/` - All page components
+- `client/src/pages/admin/` - Admin dashboard pages (dashboard, users, prompts)
 
 #### Shared
 - `shared/schema.ts` - Drizzle database schema and Zod validation schemas
 
 ### Database Schema
 
-- **users**: id, email, password, freeRevisionsUsed (default 0), paidRevisionsRemaining (default 0), stripeCustomerId
+- **users**: id, email, password, role (admin/user), status (active/deactivated), freeRevisionsUsed, paidRevisionsRemaining, stripeCustomerId, lastLoginAt, createdAt
 - **resumes**: id, userId, originalFilename, fileType, extractedText, filePath, createdAt
 - **revisions**: id, resumeId, userId, targetIndustry, targetRole, tailoredContent, wasFree, createdAt
 - **payments**: id, userId, stripeSessionId, stripePaymentIntentId, amount, currency, status, revisionsGranted, createdAt
+- **promptVersions**: id, name, description, systemPrompt, userPromptTemplate, isActive, isDefault, createdBy, createdAt
+- **analyticsEvents**: id, eventType, userId, metadata, createdAt
+- **promptTestRuns**: id, promptVersionId, systemPrompt, userPromptTemplate, testInput, testOutput, targetIndustry, targetRole, executionTimeMs, createdBy, createdAt
 
 ## API Endpoints
 
@@ -65,6 +76,16 @@ ResumeTailor allows users to:
 ### Payments
 - `POST /api/payments/checkout` - Create Stripe checkout session
 - `POST /api/stripe/webhook` - Stripe webhook handler
+
+### Admin (requires admin role)
+- `GET /api/admin/stats` - Get analytics summary
+- `GET /api/admin/users` - List all users
+- `PATCH /api/admin/users/:id/status` - Update user status
+- `GET /api/admin/prompts` - List prompt versions
+- `GET /api/admin/prompts/defaults` - Get default prompt content
+- `POST /api/admin/prompts` - Create new prompt version
+- `POST /api/admin/prompts/:id/activate` - Set prompt as active
+- `POST /api/admin/prompts/test` - Test a prompt configuration
 
 ## Pricing Plans
 
@@ -92,4 +113,10 @@ npm run db:push    # Push schema changes to database
 
 ## Recent Changes
 
+- 2026-02-03: Added comprehensive admin dashboard with user management, prompt testing, and analytics
+- 2026-02-03: Implemented role-based access control (RBAC) for admin features
+- 2026-02-03: Added structured JSON logging for auth and critical operations
+- 2026-02-03: Created analytics tracking system for key events
+- 2026-02-03: Added prompt versioning with A/B testing capability
+- 2026-02-03: Implemented premium gamified resume coach AI persona
 - 2026-02-02: Initial implementation with full auth, resume upload, AI tailoring, and Stripe payments

@@ -15,7 +15,8 @@ import {
   Clock,
   ArrowRight,
   FileCheck,
-  AlertCircle
+  AlertCircle,
+  Shield
 } from "lucide-react";
 import type { Resume, Revision } from "@shared/schema";
 
@@ -53,6 +54,14 @@ export default function DashboardPage() {
             <span className="font-bold text-lg">ResumeTailor</span>
           </div>
           <div className="flex items-center gap-2">
+            {user.role === "admin" && (
+              <Link href="/admin">
+                <Button variant="outline" size="sm" data-testid="button-admin">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Admin
+                </Button>
+              </Link>
+            )}
             <ThemeToggle />
             <Button variant="ghost" onClick={handleLogout} data-testid="button-logout">
               <LogOut className="h-4 w-4 mr-2" />

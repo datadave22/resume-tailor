@@ -16,11 +16,13 @@ import PricingPage from "@/pages/pricing";
 import RevisionPage from "@/pages/revision";
 import PaymentSuccessPage from "@/pages/payment-success";
 import PaymentCancelPage from "@/pages/payment-cancel";
+import AdminDashboardPage from "@/pages/admin/dashboard";
+import AdminUsersPage from "@/pages/admin/users";
+import AdminPromptsPage from "@/pages/admin/prompts";
 import { Loader2 } from "lucide-react";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
-  const [, setLocation] = useLocation();
 
   if (isLoading) {
     return (
@@ -32,6 +34,28 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (!user) {
     return <Redirect to="/login" />;
+  }
+
+  return <>{children}</>;
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Redirect to="/login" />;
+  }
+
+  if (user.role !== "admin") {
+    return <Redirect to="/dashboard" />;
   }
 
   return <>{children}</>;
@@ -103,6 +127,21 @@ function Router() {
         <ProtectedRoute>
           <PaymentCancelPage />
         </ProtectedRoute>
+      </Route>
+      <Route path="/admin">
+        <AdminRoute>
+          <AdminDashboardPage />
+        </AdminRoute>
+      </Route>
+      <Route path="/admin/users">
+        <AdminRoute>
+          <AdminUsersPage />
+        </AdminRoute>
+      </Route>
+      <Route path="/admin/prompts">
+        <AdminRoute>
+          <AdminPromptsPage />
+        </AdminRoute>
       </Route>
       <Route component={NotFound} />
     </Switch>

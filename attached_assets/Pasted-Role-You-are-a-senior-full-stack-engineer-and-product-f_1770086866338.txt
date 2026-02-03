@@ -1,0 +1,153 @@
+Role
+
+You are a senior full-stack engineer and product-focused startup CTO.
+
+Objective
+
+Audit, fix, and extend this application so it is production-ready, monetizable, and operator-friendly, with minimal over-engineering and a fast path to revenue.
+
+1. Core Functionality Audit & Fixes (Blocker)
+
+Goal: All auth and onboarding flows must work reliably end-to-end.
+
+Verify signup, login, password reset, and email delivery in a real environment
+
+Identify and fix the current signup failure (real email + credentials fail)
+
+Validate auth configuration:
+
+Environment variables
+
+Email provider setup
+
+Token/session handling
+
+Add:
+
+Clear user-facing error messages
+
+Server-side validation
+
+Structured logging for auth failures (visible during testing)
+
+Confirm happy-path and failure-path behavior with real test accounts
+
+Acceptance criteria:
+A new user can successfully sign up, receive emails, log in, and recover their account without developer intervention.
+
+2. Admin / Operator-Only Capabilities (Hidden from Users)
+
+Goal: Give operators visibility and control without exposing internals.
+
+Implement a secure, admin-only dashboard with:
+
+User management:
+
+View all users (email, signup date, status, usage)
+
+Deactivate / reactivate users
+
+Usage visibility:
+
+Per-user usage metrics
+
+High-level system health indicators
+
+Access control:
+
+Clearly separated admin routes
+
+Role-based access control (RBAC)
+
+Admin UI fully hidden from non-admin users
+
+Security requirement:
+Admin routes must be inaccessible via URL guessing or client-side manipulation.
+
+3. Operator Prompt Testing & Experimentation
+
+Goal: Enable fast iteration on AI prompts without redeploying code.
+
+Create an admin-only prompt testing page that allows operators to:
+
+Edit and test system + user prompts
+
+Run test inputs and inspect outputs
+
+Save prompt versions
+
+Compare outputs across prompt versions
+
+Constraints:
+
+Must be accessible only to admin accounts
+
+Must not impact production user prompts unless explicitly promoted
+
+4. Analytics & Usage Tracking (Lightweight)
+
+Goal: Know what’s happening without heavy tooling.
+
+Track:
+
+Signups and active users
+
+Feature usage (especially AI calls)
+
+Resume generations per user
+
+Errors and failed actions
+
+Requirements:
+
+Use lightweight, early-stage-friendly analytics
+
+Avoid vendor lock-in
+
+Data should support monetization decisions
+
+5. Monetization Readiness (Not Full Billing)
+
+Goal: Prepare for payment without overbuilding.
+
+Implement usage limits (e.g. free tier vs paid)
+
+Add feature gating hooks where pricing logic can be applied
+
+Clearly mark:
+
+Where plans will be enforced
+
+Where billing integration would plug in later
+
+Explicit constraint:
+Do not build a full billing system unless absolutely necessary. Optimize for fastest path to first dollar.
+
+6. Code Quality & Portability
+
+Goal: Keep the codebase clean, understandable, and future-proof.
+
+Avoid platform lock-in where possible
+
+Use standard patterns and widely adopted services
+
+Add comments explaining:
+
+Non-obvious decisions
+
+Tradeoffs made for speed vs scale
+
+7. Final Output Expectations
+
+Provide a concise summary that includes:
+
+What was fixed and how
+
+What remains risky or incomplete
+
+Recommended next steps, ranked by priority
+
+Any assumptions or shortcuts taken
+
+Tone:
+Startup-pragmatic. Bias toward speed, clarity, and real-world constraints.

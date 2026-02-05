@@ -1,7 +1,7 @@
 import { eq, desc, sql, count, and, gte } from "drizzle-orm";
 import { db } from "./db";
 import { 
-  users, 
+  users,
   resumes, 
   revisions, 
   payments,
@@ -9,7 +9,6 @@ import {
   analyticsEvents,
   promptTestRuns,
   type User,
-  type InsertUser,
   type Resume,
   type InsertResume,
   type Revision,
@@ -28,7 +27,6 @@ export interface IStorage {
   // Users
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, data: Partial<User>): Promise<User | undefined>;
   getAllUsers(): Promise<User[]>;
   getUserCount(): Promise<number>;
@@ -96,13 +94,8 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
-    return user;
-  }
-
   async updateUser(id: string, data: Partial<User>): Promise<User | undefined> {
-    const [user] = await db.update(users).set(data).where(eq(users.id, id)).returning();
+    const [user] = await db.update(users).set({ ...data, updatedAt: new Date() }).where(eq(users.id, id)).returning();
     return user;
   }
 
@@ -236,9 +229,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async setActivePromptVersion(id: string): Promise<void> {
-    // Deactivate all prompts
     await db.update(promptVersions).set({ isActive: false });
-    // Activate the selected one
     await db.update(promptVersions).set({ isActive: true }).where(eq(promptVersions.id, id));
   }
 

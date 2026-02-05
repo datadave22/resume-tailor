@@ -1,4 +1,4 @@
-import { Switch, Route, Redirect, useLocation } from "wouter";
+import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -6,9 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import NotFound from "@/pages/not-found";
-import HomePage from "@/pages/home";
-import LoginPage from "@/pages/login";
-import SignupPage from "@/pages/signup";
+import LandingPage from "@/pages/landing";
 import DashboardPage from "@/pages/dashboard";
 import UploadPage from "@/pages/upload";
 import TailorPage from "@/pages/tailor";
@@ -22,36 +20,46 @@ import AdminPromptsPage from "@/pages/admin/prompts";
 import { Loader2 } from "lucide-react";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, login } = useAuth();
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" data-testid="loading-spinner" />
       </div>
     );
   }
 
   if (!user) {
-    return <Redirect to="/login" />;
+    login();
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" data-testid="loading-spinner" />
+      </div>
+    );
   }
 
   return <>{children}</>;
 }
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, login } = useAuth();
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" data-testid="loading-spinner" />
       </div>
     );
   }
 
   if (!user) {
-    return <Redirect to="/login" />;
+    login();
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" data-testid="loading-spinner" />
+      </div>
+    );
   }
 
   if (user.role !== "admin") {
@@ -61,13 +69,13 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function PublicRoute({ children }: { children: React.ReactNode }) {
+function HomeRoute() {
   const { user, isLoading } = useAuth();
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" data-testid="loading-spinner" />
       </div>
     );
   }
@@ -76,23 +84,13 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
     return <Redirect to="/dashboard" />;
   }
 
-  return <>{children}</>;
+  return <LandingPage />;
 }
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={HomePage} />
-      <Route path="/login">
-        <PublicRoute>
-          <LoginPage />
-        </PublicRoute>
-      </Route>
-      <Route path="/signup">
-        <PublicRoute>
-          <SignupPage />
-        </PublicRoute>
-      </Route>
+      <Route path="/" component={HomeRoute} />
       <Route path="/dashboard">
         <ProtectedRoute>
           <DashboardPage />

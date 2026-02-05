@@ -1,4 +1,3 @@
-import { Link } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,8 +40,8 @@ const benefits = [
   "No subscription required",
 ];
 
-export default function HomePage() {
-  const { user, isLoading } = useAuth();
+export default function LandingPage() {
+  const { login } = useAuth();
 
   return (
     <div className="min-h-screen bg-background">
@@ -56,22 +55,9 @@ export default function HomePage() {
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            {!isLoading && (
-              user ? (
-                <Link href="/dashboard">
-                  <Button data-testid="button-dashboard">Dashboard</Button>
-                </Link>
-              ) : (
-                <>
-                  <Link href="/login">
-                    <Button variant="ghost" data-testid="button-login">Sign In</Button>
-                  </Link>
-                  <Link href="/signup">
-                    <Button data-testid="button-signup">Get Started</Button>
-                  </Link>
-                </>
-              )
-            )}
+            <Button onClick={login} data-testid="button-login">
+              Sign In
+            </Button>
           </div>
         </div>
       </header>
@@ -92,20 +78,13 @@ export default function HomePage() {
               Stand out to recruiters with a perfectly tailored resume.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/signup">
-                <Button size="lg" className="text-lg px-8" data-testid="button-get-started">
-                  Get Started Free
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="/login">
-                <Button size="lg" variant="outline" className="text-lg px-8" data-testid="button-sign-in">
-                  Sign In
-                </Button>
-              </Link>
+              <Button size="lg" className="text-lg px-8" onClick={login} data-testid="button-get-started">
+                Get Started Free
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
             </div>
             <p className="text-sm text-muted-foreground mt-4">
-              3 free revisions included. No credit card required.
+              Sign in with Google, GitHub, or email. 3 free revisions included.
             </p>
           </div>
         </section>
@@ -191,12 +170,10 @@ export default function HomePage() {
             <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
               Join thousands of job seekers who've improved their resumes with ResumeTailor.
             </p>
-            <Link href="/signup">
-              <Button size="lg" className="text-lg px-8" data-testid="button-cta">
-                Start Tailoring Now
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
+            <Button size="lg" className="text-lg px-8" onClick={login} data-testid="button-cta">
+              Start Tailoring Now
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
           </div>
         </section>
       </main>

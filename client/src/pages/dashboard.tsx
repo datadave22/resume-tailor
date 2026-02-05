@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +22,6 @@ import type { Resume, Revision } from "@shared/schema";
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
-  const [, setLocation] = useLocation();
 
   const { data: resumes, isLoading: resumesLoading } = useQuery<Resume[]>({
     queryKey: ["/api/resumes"],
@@ -32,12 +31,11 @@ export default function DashboardPage() {
     queryKey: ["/api/revisions"],
   });
 
-  const handleLogout = async () => {
-    await logout();
-    setLocation("/login");
-  };
-
   if (!user) return null;
+
+  const displayName = user.firstName 
+    ? `${user.firstName}${user.lastName ? ' ' + user.lastName : ''}`
+    : user.email || 'User';
 
   const freeRevisionsLeft = 3 - (user.freeRevisionsUsed || 0);
   const totalRevisionsLeft = freeRevisionsLeft + (user.paidRevisionsRemaining || 0);
@@ -63,7 +61,7 @@ export default function DashboardPage() {
               </Link>
             )}
             <ThemeToggle />
-            <Button variant="ghost" onClick={handleLogout} data-testid="button-logout">
+            <Button variant="ghost" onClick={logout} data-testid="button-logout">
               <LogOut className="h-4 w-4 mr-2" />
               Logout
             </Button>
@@ -73,7 +71,7 @@ export default function DashboardPage() {
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Welcome back!</h1>
+          <h1 className="text-3xl font-bold mb-2">Welcome back, {displayName}!</h1>
           <p className="text-muted-foreground">{user.email}</p>
         </div>
 

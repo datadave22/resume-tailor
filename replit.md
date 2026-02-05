@@ -22,7 +22,7 @@ Administrators have access to a comprehensive dashboard:
 - **Frontend**: React with TypeScript, TanStack Query, shadcn/ui, Wouter routing
 - **Backend**: Express.js with TypeScript
 - **Database**: PostgreSQL with Drizzle ORM
-- **Authentication**: Session-based with bcrypt password hashing, role-based access control
+- **Authentication**: Replit Auth (OIDC) - supports Google, GitHub, X, Apple, and email login
 - **AI**: OpenAI GPT-4o for resume tailoring with premium gamified coach persona
 - **Payments**: Stripe Checkout for purchasing revisions
 - **Logging**: Structured JSON logging for all critical operations
@@ -31,37 +31,41 @@ Administrators have access to a comprehensive dashboard:
 
 #### Backend
 - `server/index.ts` - Express server entry point
-- `server/routes.ts` - All API routes (auth, resumes, revisions, payments, admin)
+- `server/routes.ts` - All API routes (resumes, revisions, payments, admin)
 - `server/storage.ts` - Database storage layer with CRUD operations
 - `server/llm.ts` - OpenAI integration for resume tailoring with prompt versioning
 - `server/stripeClient.ts` - Stripe client initialization
+- `server/replit_integrations/auth/` - Replit Auth integration module
 
 #### Frontend
 - `client/src/App.tsx` - Main app with routing, providers, and role-based route guards
-- `client/src/lib/auth.tsx` - Authentication context provider
+- `client/src/lib/auth.tsx` - Authentication context provider (Replit Auth)
+- `client/src/pages/landing.tsx` - Landing page with social login
 - `client/src/pages/` - All page components
 - `client/src/pages/admin/` - Admin dashboard pages (dashboard, users, prompts)
 
 #### Shared
 - `shared/schema.ts` - Drizzle database schema and Zod validation schemas
+- `shared/models/auth.ts` - User and session schema for Replit Auth
 
 ### Database Schema
 
-- **users**: id, email, password, role (admin/user), status (active/deactivated), freeRevisionsUsed, paidRevisionsRemaining, stripeCustomerId, lastLoginAt, createdAt
+- **users**: id, email, firstName, lastName, profileImageUrl, role (admin/user), status (active/deactivated), freeRevisionsUsed, paidRevisionsRemaining, stripeCustomerId, lastLoginAt, createdAt, updatedAt
+- **sessions**: sid, sess, expire (managed by Replit Auth)
 - **resumes**: id, userId, originalFilename, fileType, extractedText, filePath, createdAt
 - **revisions**: id, resumeId, userId, targetIndustry, targetRole, tailoredContent, wasFree, createdAt
 - **payments**: id, userId, stripeSessionId, stripePaymentIntentId, amount, currency, status, revisionsGranted, createdAt
 - **promptVersions**: id, name, description, systemPrompt, userPromptTemplate, isActive, isDefault, createdBy, createdAt
 - **analyticsEvents**: id, eventType, userId, metadata, createdAt
-- **promptTestRuns**: id, promptVersionId, systemPrompt, userPromptTemplate, testInput, testOutput, targetIndustry, targetRole, executionTimeMs, createdBy, createdAt
+- **promptTestRuns**: id, promptVersionId, testInput, targetIndustry, targetRole, output, executionTimeMs, createdBy, createdAt
 
 ## API Endpoints
 
-### Authentication
-- `POST /api/auth/signup` - Create new user account
-- `POST /api/auth/login` - Login with email/password
-- `POST /api/auth/logout` - End session
-- `GET /api/auth/me` - Get current user
+### Authentication (Replit Auth)
+- `GET /api/login` - Initiate OAuth login (redirects to Replit OIDC)
+- `GET /api/logout` - End session (redirects to Replit logout)
+- `GET /api/callback` - OAuth callback handler
+- `GET /api/auth/user` - Get current authenticated user
 
 ### Resumes
 - `GET /api/resumes` - List user's resumes
@@ -113,6 +117,10 @@ npm run db:push    # Push schema changes to database
 
 ## Recent Changes
 
+- 2026-02-05: Migrated authentication to Replit Auth (OIDC) with Google, GitHub, X, Apple, and email login support
+- 2026-02-05: Removed email/password authentication in favor of social login
+- 2026-02-05: Updated landing page with unified Sign In button
+- 2026-02-05: Dashboard now displays user's name from OAuth profile
 - 2026-02-03: Added comprehensive admin dashboard with user management, prompt testing, and analytics
 - 2026-02-03: Implemented role-based access control (RBAC) for admin features
 - 2026-02-03: Added structured JSON logging for auth and critical operations

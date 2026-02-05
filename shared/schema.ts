@@ -3,26 +3,18 @@ import { pgTable, text, varchar, integer, timestamp, boolean, jsonb } from "driz
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Users table - stores user authentication, roles, and revision tracking
-export const users = pgTable("users", {
-  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
-  email: text("email").notNull().unique(),
-  password: text("password").notNull(),
-  role: text("role").notNull().default("user"), // user, admin
-  status: text("status").notNull().default("active"), // active, deactivated
-  freeRevisionsUsed: integer("free_revisions_used").notNull().default(0),
-  paidRevisionsRemaining: integer("paid_revisions_remaining").notNull().default(0),
-  stripeCustomerId: text("stripe_customer_id"),
-  lastLoginAt: timestamp("last_login_at"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+// Export auth-related tables and types
+export * from "./models/auth";
+
+// Import users from auth model for foreign key references
+import { users } from "./models/auth";
 
 // Resumes table - stores uploaded resumes
 export const resumes = pgTable("resumes", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),
   originalFilename: text("original_filename").notNull(),
-  fileType: text("file_type").notNull(), // pdf or docx
+  fileType: text("file_type").notNull(),
   extractedText: text("extracted_text").notNull(),
   filePath: text("file_path").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -37,7 +29,7 @@ export const revisions = pgTable("revisions", {
   targetRole: text("target_role").notNull(),
   tailoredContent: text("tailored_content").notNull(),
   wasFree: boolean("was_free").notNull().default(true),
-  promptVersionId: varchar("prompt_version_id", { length: 36 }), // Track which prompt was used
+  promptVersionId: varchar("prompt_version_id", { length: 36 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -47,9 +39,9 @@ export const payments = pgTable("payments", {
   userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),
   stripeSessionId: text("stripe_session_id").notNull(),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
-  amount: integer("amount").notNull(), // in cents
+  amount: integer("amount").notNull(),
   currency: text("currency").notNull().default("usd"),
-  status: text("status").notNull().default("pending"), // pending, completed, failed
+  status: text("status").notNull().default("pending"),
   revisionsGranted: integer("revisions_granted").notNull().default(10),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -61,8 +53,8 @@ export const promptVersions = pgTable("prompt_versions", {
   description: text("description"),
   systemPrompt: text("system_prompt").notNull(),
   userPromptTemplate: text("user_prompt_template").notNull(),
-  isActive: boolean("is_active").notNull().default(false), // Only one can be active
-  isDefault: boolean("is_default").notNull().default(false), // Fallback prompt
+  isActive: boolean("is_active").notNull().default(false),
+  isDefault: boolean("is_default").notNull().default(false),
   createdBy: varchar("created_by", { length: 36 }).references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -71,9 +63,9 @@ export const promptVersions = pgTable("prompt_versions", {
 // Analytics events table - lightweight tracking
 export const analyticsEvents = pgTable("analytics_events", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
-  eventType: text("event_type").notNull(), // signup, login, upload, tailor, payment, error
+  eventType: text("event_type").notNull(),
   userId: varchar("user_id", { length: 36 }).references(() => users.id, { onDelete: "set null" }),
-  metadata: jsonb("metadata"), // Flexible JSON for event-specific data
+  metadata: jsonb("metadata"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -91,11 +83,6 @@ export const promptTestRuns = pgTable("prompt_test_runs", {
 });
 
 // Insert schemas
-export const insertUserSchema = createInsertSchema(users).pick({
-  email: true,
-  password: true,
-});
-
 export const insertResumeSchema = createInsertSchema(resumes).pick({
   userId: true,
   originalFilename: true,
@@ -150,21 +137,7 @@ export const insertPromptTestRunSchema = createInsertSchema(promptTestRuns).pick
   createdBy: true,
 });
 
-// Auth schemas for validation
-export const signupSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
-
-export const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(1, "Password is required"),
-});
-
+// Tailor resume validation schema
 export const tailorResumeSchema = z.object({
   resumeId: z.string().min(1, "Resume is required"),
   targetIndustry: z.string().min(1, "Industry is required"),
@@ -194,8 +167,6 @@ export const testPromptSchema = z.object({
 });
 
 // Types
-export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Resume = typeof resumes.$inferSelect;
 export type InsertResume = z.infer<typeof insertResumeSchema>;
 export type Revision = typeof revisions.$inferSelect;
@@ -208,6 +179,4 @@ export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
 export type InsertAnalyticsEvent = z.infer<typeof insertAnalyticsEventSchema>;
 export type PromptTestRun = typeof promptTestRuns.$inferSelect;
 export type InsertPromptTestRun = z.infer<typeof insertPromptTestRunSchema>;
-export type SignupInput = z.infer<typeof signupSchema>;
-export type LoginInput = z.infer<typeof loginSchema>;
 export type TailorResumeInput = z.infer<typeof tailorResumeSchema>;

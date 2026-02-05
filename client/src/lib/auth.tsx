@@ -4,9 +4,9 @@ import type { User } from "@shared/schema";
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
+  isAuthenticated: boolean;
+  login: () => void;
+  logout: () => void;
   refetchUser: () => Promise<void>;
 }
 
@@ -18,10 +18,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUser = useCallback(async () => {
     try {
-      const res = await fetch("/api/auth/me");
+      const res = await fetch("/api/auth/user", {
+        credentials: "include",
+      });
       if (res.ok) {
         const data = await res.json();
-        setUser(data.user);
+        setUser(data);
       } else {
         setUser(null);
       }
@@ -36,37 +38,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fetchUser();
   }, [fetchUser]);
 
-  const login = async (email: string, password: string) => {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.message || "Login failed");
-    }
-    const data = await res.json();
-    setUser(data.user);
+  const login = () => {
+    window.location.href = "/api/login";
   };
 
-  const signup = async (email: string, password: string) => {
-    const res = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, confirmPassword: password }),
-    });
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(data.message || "Signup failed");
-    }
-    const data = await res.json();
-    setUser(data.user);
-  };
-
-  const logout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    setUser(null);
+  const logout = () => {
+    window.location.href = "/api/logout";
   };
 
   const refetchUser = async () => {
@@ -74,7 +51,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, signup, logout, refetchUser }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      isLoading, 
+      isAuthenticated: !!user,
+      login, 
+      logout, 
+      refetchUser 
+    }}>
       {children}
     </AuthContext.Provider>
   );

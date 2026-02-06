@@ -110,34 +110,34 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <header className="border-b bg-card sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link href="/dashboard">
               <Button variant="ghost" size="icon" data-testid="button-back">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-primary rounded-lg">
-                <FileText className="h-5 w-5 text-primary-foreground" />
+              <div className="p-1.5 sm:p-2 bg-primary rounded-md sm:rounded-lg">
+                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
               </div>
-              <span className="font-bold text-lg">ResumeTailor</span>
+              <span className="font-bold text-sm sm:text-lg">ResumeTailor</span>
             </div>
           </div>
           <ThemeToggle />
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-12 max-w-5xl">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Get More Revisions</h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+      <main className="container mx-auto px-4 py-6 sm:py-12 max-w-5xl">
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-2xl sm:text-4xl font-bold mb-3 sm:mb-4">Get More Revisions</h1>
+          <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto">
             Unlock more AI-powered resume tailoring. Perfect your resume for every job application.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
           {pricingPlans.map((plan) => (
             <Card 
               key={plan.id} 

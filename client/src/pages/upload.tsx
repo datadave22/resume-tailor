@@ -144,29 +144,29 @@ export default function UploadPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <header className="border-b bg-card sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link href="/dashboard">
               <Button variant="ghost" size="icon" data-testid="button-back">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-primary rounded-lg">
-                <FileText className="h-5 w-5 text-primary-foreground" />
+              <div className="p-1.5 sm:p-2 bg-primary rounded-md sm:rounded-lg">
+                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
               </div>
-              <span className="font-bold text-lg">ResumeTailor</span>
+              <span className="font-bold text-sm sm:text-lg">ResumeTailor</span>
             </div>
           </div>
           <ThemeToggle />
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-2xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Upload Your Resume</h1>
-          <p className="text-muted-foreground">
+      <main className="container mx-auto px-4 py-4 sm:py-8 max-w-2xl">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-xl sm:text-3xl font-bold mb-2">Upload Your Resume</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Upload your existing resume to get started. We accept PDF and DOCX files up to 5MB.
           </p>
         </div>

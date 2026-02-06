@@ -46,16 +46,16 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-primary rounded-lg">
-              <FileText className="h-5 w-5 text-primary-foreground" />
+            <div className="p-1.5 sm:p-2 bg-primary rounded-md sm:rounded-lg">
+              <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-lg">ResumeTailor</span>
+            <span className="font-bold text-sm sm:text-lg">ResumeTailor</span>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Button onClick={login} data-testid="button-login">
+            <Button size="sm" onClick={login} data-testid="button-login">
               Sign In
             </Button>
           </div>
@@ -63,17 +63,17 @@ export default function LandingPage() {
       </header>
 
       <main>
-        <section className="py-20 md:py-32">
+        <section className="py-12 sm:py-20 md:py-32">
           <div className="container mx-auto px-4 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-              <Zap className="h-4 w-4" />
+            <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-medium mb-4 sm:mb-6">
+              <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
               AI-Powered Resume Optimization
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 max-w-3xl mx-auto leading-tight">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-4 sm:mb-6 max-w-3xl mx-auto leading-tight">
               Tailor Your Resume for{" "}
               <span className="text-primary">Any Job</span>
             </h1>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+            <p className="text-base sm:text-xl text-muted-foreground mb-6 sm:mb-8 max-w-2xl mx-auto">
               Upload your resume and let AI optimize it for your target industry and role. 
               Stand out to recruiters with a perfectly tailored resume.
             </p>

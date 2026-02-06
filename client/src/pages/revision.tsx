@@ -60,26 +60,26 @@ export default function RevisionPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+      <header className="border-b bg-card sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-4">
             <Link href="/dashboard">
               <Button variant="ghost" size="icon" data-testid="button-back">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             </Link>
             <div className="flex items-center gap-2">
-              <div className="p-2 bg-primary rounded-lg">
-                <FileText className="h-5 w-5 text-primary-foreground" />
+              <div className="p-1.5 sm:p-2 bg-primary rounded-md sm:rounded-lg">
+                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
               </div>
-              <span className="font-bold text-lg">ResumeTailor</span>
+              <span className="font-bold text-sm sm:text-lg">ResumeTailor</span>
             </div>
           </div>
           <ThemeToggle />
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8 max-w-4xl">
+      <main className="container mx-auto px-4 py-4 sm:py-8 max-w-4xl">
         {isLoading ? (
           <div className="space-y-4">
             <Skeleton className="h-8 w-64" />
@@ -88,12 +88,12 @@ export default function RevisionPage() {
           </div>
         ) : revision ? (
           <>
-            <div className="mb-8">
-              <div className="flex items-center gap-2 mb-2">
-                <h1 className="text-3xl font-bold">{revision.targetRole}</h1>
+            <div className="mb-4 sm:mb-8">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <h1 className="text-xl sm:text-3xl font-bold">{revision.targetRole}</h1>
                 {revision.wasFree && <Badge variant="outline">Free Revision</Badge>}
               </div>
-              <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-sm sm:text-base text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Building2 className="h-4 w-4" />
                   <span>{revision.targetIndustry}</span>
@@ -106,10 +106,10 @@ export default function RevisionPage() {
             </div>
 
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 space-y-0 pb-4">
                 <div>
-                  <CardTitle>Tailored Resume</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-base sm:text-lg">Tailored Resume</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">
                     AI-optimized for {revision.targetIndustry} - {revision.targetRole}
                   </CardDescription>
                 </div>
@@ -122,13 +122,13 @@ export default function RevisionPage() {
                   >
                     {copied ? (
                       <>
-                        <Check className="h-4 w-4 mr-2" />
-                        Copied
+                        <Check className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Copied</span>
                       </>
                     ) : (
                       <>
-                        <Copy className="h-4 w-4 mr-2" />
-                        Copy
+                        <Copy className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Copy</span>
                       </>
                     )}
                   </Button>
@@ -138,8 +138,8 @@ export default function RevisionPage() {
                     onClick={handleDownload}
                     data-testid="button-download"
                   >
-                    <Download className="h-4 w-4 mr-2" />
-                    Download
+                    <Download className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Download</span>
                   </Button>
                 </div>
               </CardHeader>
@@ -152,7 +152,7 @@ export default function RevisionPage() {
               </CardContent>
             </Card>
 
-            <div className="mt-6 flex justify-center gap-4">
+            <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
               <Link href="/tailor">
                 <Button variant="outline" data-testid="button-tailor-another">
                   Tailor Another Resume

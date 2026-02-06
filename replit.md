@@ -108,6 +108,18 @@ Automatic (via integrations):
 - `AI_INTEGRATIONS_OPENAI_BASE_URL` - OpenAI base URL
 - Stripe keys managed via Replit Stripe integration
 
+## Admin CLI
+
+```bash
+npx tsx scripts/admin-cli.ts users          # List all users
+npx tsx scripts/admin-cli.ts stats          # Show app statistics
+npx tsx scripts/admin-cli.ts promote <email|id>   # Promote user to admin
+npx tsx scripts/admin-cli.ts demote <email|id>    # Demote admin to user
+npx tsx scripts/admin-cli.ts grant <email|id> <n> # Grant n paid revisions
+npx tsx scripts/admin-cli.ts deactivate <email|id> # Deactivate user
+npx tsx scripts/admin-cli.ts activate <email|id>   # Reactivate user
+```
+
 ## Development
 
 ```bash
@@ -117,6 +129,10 @@ npm run db:push    # Push schema changes to database
 
 ## Recent Changes
 
+- 2026-02-06: Full responsive design for mobile and tablet across all pages
+- 2026-02-06: Created AdminLayout shared component for consistent admin page navigation
+- 2026-02-06: Added admin CLI tool (scripts/admin-cli.ts) for terminal management
+- 2026-02-06: Added duplicate user safeguard - email-based account merging during OAuth login
 - 2026-02-05: Migrated authentication to Replit Auth (OIDC) with Google, GitHub, X, Apple, and email login support
 - 2026-02-05: Removed email/password authentication in favor of social login
 - 2026-02-05: Updated landing page with unified Sign In button

@@ -1,10 +1,11 @@
 import type { Express, Request, Response } from "express";
 import OpenAI from "openai";
 import { chatStorage } from "./storage";
+import env from "../../../config/env.js";
 
 const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  apiKey: env.openai.apiKey,
+  baseURL: env.openai.baseURL,
 });
 
 export function registerChatRoutes(app: Express): void {

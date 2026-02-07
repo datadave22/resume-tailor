@@ -9,7 +9,7 @@ import { storage } from "./storage";
 import { setupAuth, registerAuthRoutes, isAuthenticated, authStorage } from "./replit_integrations/auth";
 import { tailorResume, testPrompt, DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT_TEMPLATE } from "./llm";
 import { getUncachableStripeClient, getStripeSync } from "./stripeClient";
-import { 
+import {
   tailorResumeSchema,
   updateUserStatusSchema,
   createPromptVersionSchema,
@@ -17,6 +17,7 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { runMigrations } from "stripe-replit-sync";
+import env from "../config/env.js";
 
 // Structured logging for auth and critical operations
 function log(level: "info" | "warn" | "error", category: string, message: string, meta?: Record<string, any>) {
@@ -129,9 +130,9 @@ export async function registerRoutes(
 
   // Initialize Stripe
   try {
-    await runMigrations({ databaseUrl: process.env.DATABASE_URL! });
+    await runMigrations({ databaseUrl: env.database.url });
     const stripeSync = await getStripeSync();
-    const webhookBaseUrl = `https://${process.env.REPLIT_DOMAINS?.split(",")[0]}`;
+    const webhookBaseUrl = `https://${env.replit.domains?.split(",")[0]}`;
     await stripeSync.findOrCreateManagedWebhook(`${webhookBaseUrl}/api/stripe/webhook`);
     stripeSync.syncBackfill().catch(console.error);
   } catch (error) {
@@ -349,7 +350,7 @@ export async function registerRoutes(
       log("info", "payment", "Checkout attempt", { userId: user.id, planId });
 
       const stripe = await getUncachableStripeClient();
-      const baseUrl = `https://${process.env.REPLIT_DOMAINS?.split(",")[0]}`;
+      const baseUrl = `https://${env.replit.domains?.split(",")[0]}`;
 
       let customerId = user.stripeCustomerId;
       if (!customerId) {
@@ -425,7 +426,7 @@ export async function registerRoutes(
       const event = stripe.webhooks.constructEvent(
         payload,
         sig as string,
-        process.env.STRIPE_WEBHOOK_SECRET || ""
+        env.stripe.webhookSecret || ""
       );
 
       if (event.type === "checkout.session.completed") {

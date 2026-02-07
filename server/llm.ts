@@ -1,9 +1,10 @@
 import OpenAI from "openai";
 import { storage } from "./storage";
+import env from "../config/env.js";
 
 const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  apiKey: env.openai.apiKey,
+  baseURL: env.openai.baseURL,
 });
 
 // Premium gamified resume coach prompt (default)

@@ -7,35 +7,35 @@ import type { Express, RequestHandler } from "express";
 import memoize from "memoizee";
 import connectPg from "connect-pg-simple";
 import { authStorage } from "./storage";
+import env from "../../../config/env.js";
 
 const getOidcConfig = memoize(
   async () => {
     return await client.discovery(
-      new URL(process.env.ISSUER_URL ?? "https://replit.com/oidc"),
-      process.env.REPL_ID!
+      new URL(env.replit.issuerUrl ?? "https://replit.com/oidc"),
+      env.replit.replId!
     );
   },
   { maxAge: 3600 * 1000 }
 );
 
 export function getSession() {
-  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
+    conString: env.database.url,
     createTableIfMissing: false,
-    ttl: sessionTtl,
+    ttl: env.session.ttl,
     tableName: "sessions",
   });
   return session({
-    secret: process.env.SESSION_SECRET!,
+    secret: env.session.secret,
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
       secure: true,
-      maxAge: sessionTtl,
+      maxAge: env.session.ttl,
     },
   });
 }
@@ -122,7 +122,7 @@ export async function setupAuth(app: Express) {
     req.logout(() => {
       res.redirect(
         client.buildEndSessionUrl(config, {
-          client_id: process.env.REPL_ID!,
+          client_id: env.replit.replId!,
           post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
         }).href
       );

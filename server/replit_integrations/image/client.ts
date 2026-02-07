@@ -1,10 +1,11 @@
 import fs from "node:fs";
 import OpenAI, { toFile } from "openai";
 import { Buffer } from "node:buffer";
+import env from "../../../config/env.js";
 
 export const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  apiKey: env.openai.apiKey,
+  baseURL: env.openai.baseURL,
 });
 
 /**

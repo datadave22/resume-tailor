@@ -4,3 +4,13 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+
+# Environment files (NOT USED - we use OS environment variables)
+.env
+.env.*
+!.env.example
+
+# User uploads (sensitive data)
+uploads/
+
+GET_STARTED.md.local/

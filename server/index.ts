@@ -79,22 +79,23 @@ app.use((req, res, next) => {
     return res.status(status).json({ message });
   });
 
-  if (process.env.NODE_ENV === "production") {
+  const env = (await import("../config/env.js")).default;
+
+  if (env.isProduction()) {
     serveStatic(app);
   } else {
     const { setupVite } = await import("./vite");
     await setupVite(httpServer, app);
   }
 
-  const port = parseInt(process.env.PORT || "5000", 10);
   httpServer.listen(
     {
-      port,
+      port: env.app.port,
       host: "0.0.0.0",
       reusePort: true,
     },
     () => {
-      log(`serving on port ${port}`);
+      log(`serving on port ${env.app.port}`);
     },
   );
 })();

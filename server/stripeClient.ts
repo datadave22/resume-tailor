@@ -1,13 +1,14 @@
 import Stripe from "stripe";
+import env from "../config/env.js";
 
 let connectionSettings: any;
 
 async function getCredentials() {
-  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
-  const xReplitToken = process.env.REPL_IDENTITY
-    ? "repl " + process.env.REPL_IDENTITY
-    : process.env.WEB_REPL_RENEWAL
-      ? "depl " + process.env.WEB_REPL_RENEWAL
+  const hostname = env.replit.connectorsHostname;
+  const xReplitToken = env.replit.replIdentity
+    ? "repl " + env.replit.replIdentity
+    : env.replit.webReplRenewal
+      ? "depl " + env.replit.webReplRenewal
       : null;
 
   if (!xReplitToken) {
@@ -15,7 +16,7 @@ async function getCredentials() {
   }
 
   const connectorName = "stripe";
-  const isProduction = process.env.REPLIT_DEPLOYMENT === "1";
+  const isProduction = env.isReplitDeployment();
   const targetEnvironment = isProduction ? "production" : "development";
 
   const url = new URL(`https://${hostname}/api/v2/connection`);
@@ -73,7 +74,7 @@ export async function getStripeSync() {
 
     stripeSync = new StripeSync({
       poolConfig: {
-        connectionString: process.env.DATABASE_URL!,
+        connectionString: env.database.url,
         max: 2,
       },
       stripeSecretKey: secretKey,

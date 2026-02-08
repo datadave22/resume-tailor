@@ -15,16 +15,32 @@ const REQUIRED_VARS = [
     pattern: /^postgresql:\/\/.+/
   },
   {
-    name: 'SESSION_SECRET',
-    description: 'Secret key for session encryption (32+ chars recommended)',
-    example: 'your-super-secret-key-at-least-32-characters-long',
-    minLength: 32
-  },
-  {
     name: 'AI_INTEGRATIONS_OPENAI_API_KEY',
     description: 'OpenAI API key',
     example: 'sk-proj-xxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
     pattern: /^sk-(proj-)?[A-Za-z0-9_-]+$/
+  },
+  {
+    name: 'STRIPE_SECRET_KEY',
+    description: 'Stripe secret key',
+    example: 'sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    pattern: /^sk_(test|live)_[A-Za-z0-9]+$/
+  },
+  {
+    name: 'STRIPE_PUBLISHABLE_KEY',
+    description: 'Stripe publishable key',
+    example: 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    pattern: /^pk_(test|live)_[A-Za-z0-9]+$/
+  },
+  {
+    name: 'CLERK_SECRET_KEY',
+    description: 'Clerk secret key',
+    example: 'sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+  },
+  {
+    name: 'CLERK_PUBLISHABLE_KEY',
+    description: 'Clerk publishable key',
+    example: 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
   }
 ];
 
@@ -36,22 +52,15 @@ const OPTIONAL_VARS = [
     default: 'https://api.openai.com/v1'
   },
   {
-    name: 'STRIPE_SECRET_KEY',
-    description: 'Stripe secret key (required for payments)',
-    example: 'sk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-    pattern: /^sk_(test|live)_[A-Za-z0-9]+$/
-  },
-  {
-    name: 'STRIPE_PUBLISHABLE_KEY',
-    description: 'Stripe publishable key',
-    example: 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-    pattern: /^pk_(test|live)_[A-Za-z0-9]+$/
-  },
-  {
     name: 'STRIPE_WEBHOOK_SECRET',
     description: 'Stripe webhook signing secret',
     example: 'whsec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
     pattern: /^whsec_[A-Za-z0-9]+$/
+  },
+  {
+    name: 'VITE_CLERK_PUBLISHABLE_KEY',
+    description: 'Clerk publishable key for frontend (same as CLERK_PUBLISHABLE_KEY)',
+    example: 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
   },
   {
     name: 'PORT',
@@ -160,7 +169,7 @@ function printResults(results, isRequired) {
 }
 
 function main() {
-  console.log(colorize('\n🔍 ResumeTailor Environment Variable Checker\n', 'bold'));
+  console.log(colorize('\nResumeTailor Environment Variable Checker\n', 'bold'));
 
   // Check required variables
   const requiredResults = REQUIRED_VARS.map(v => checkVariable(v, true));
@@ -174,14 +183,13 @@ function main() {
   console.log('\n' + '='.repeat(80));
 
   const requiredFailed = requiredResults.filter(r => !r.isValid);
-  const requiredMissing = requiredResults.filter(r => !r.isSet);
   const optionalMissing = optionalResults.filter(r => !r.isSet);
 
   if (requiredFailed.length > 0) {
-    console.log(colorize('\n✗ VALIDATION FAILED', 'red'));
+    console.log(colorize('\nVALIDATION FAILED', 'red'));
     console.log(colorize(`\n${requiredFailed.length} required variable(s) are invalid or missing:`, 'red'));
     requiredFailed.forEach(r => {
-      console.log(colorize(`  • ${r.name}`, 'red'));
+      console.log(colorize(`  - ${r.name}`, 'red'));
       const config = REQUIRED_VARS.find(v => v.name === r.name);
       if (config) {
         console.log(`    ${colorize('Description:', 'yellow')} ${config.description}`);
@@ -189,18 +197,16 @@ function main() {
         console.log(`    ${colorize('Set with:', 'yellow')} export ${r.name}="${config.example}"`);
       }
     });
-    console.log(colorize('\nPlease set these variables in your ~/.bashrc and run:', 'yellow'));
-    console.log(colorize('  source ~/.bashrc', 'cyan'));
-    console.log(colorize('  npm run check:env', 'cyan'));
+    console.log(colorize('\nPlease set these variables and try again.', 'yellow'));
     process.exit(1);
   }
 
-  console.log(colorize('\n✓ All required variables are valid!', 'green'));
+  console.log(colorize('\nAll required variables are valid!', 'green'));
 
   if (optionalMissing.length > 0) {
-    console.log(colorize(`\n⚠ ${optionalMissing.length} optional variable(s) not set:`, 'yellow'));
+    console.log(colorize(`\n${optionalMissing.length} optional variable(s) not set:`, 'yellow'));
     optionalMissing.forEach(r => {
-      console.log(colorize(`  • ${r.name}`, 'yellow'));
+      console.log(colorize(`  - ${r.name}`, 'yellow'));
       const config = OPTIONAL_VARS.find(v => v.name === r.name);
       if (config && config.description) {
         console.log(`    ${config.description}`);
@@ -209,7 +215,7 @@ function main() {
     console.log(colorize('\nThis is OK - optional features may be disabled.', 'yellow'));
   }
 
-  console.log(colorize('\n✓ Environment configuration ready!', 'green'));
+  console.log(colorize('\nEnvironment configuration ready!', 'green'));
   console.log(colorize('You can now run: npm run dev\n', 'cyan'));
 
   process.exit(0);

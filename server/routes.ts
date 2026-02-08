@@ -1,14 +1,12 @@
 import type { Express, Request, Response, NextFunction } from "express";
-import { createServer, type Server } from "http";
 import multer from "multer";
-import path from "path";
-import fs from "fs";
 import * as pdfParse from "pdf-parse";
 import * as mammoth from "mammoth";
 import { storage } from "./storage";
-import { setupAuth, registerAuthRoutes, isAuthenticated, authStorage } from "./replit_integrations/auth";
+import { authStorage } from "./authStorage";
+import { getAuth, requireAuth, clerkClient } from "@clerk/express";
 import { tailorResume, testPrompt, DEFAULT_SYSTEM_PROMPT, DEFAULT_USER_PROMPT_TEMPLATE } from "./llm";
-import { getUncachableStripeClient, getStripeSync } from "./stripeClient";
+import { getStripeClient } from "./stripeClient";
 import {
   tailorResumeSchema,
   updateUserStatusSchema,
@@ -16,7 +14,6 @@ import {
   testPromptSchema
 } from "@shared/schema";
 import { z } from "zod";
-import { runMigrations } from "stripe-replit-sync";
 import env from "../config/env.js";
 
 // Structured logging for auth and critical operations
@@ -32,20 +29,9 @@ function log(level: "info" | "warn" | "error", category: string, message: string
   console.log(JSON.stringify(logEntry));
 }
 
-const UPLOADS_DIR = "./uploads";
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
-
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: UPLOADS_DIR,
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      cb(null, uniqueSuffix + path.extname(file.originalname));
-    },
-  }),
-  limits: { fileSize: 5 * 1024 * 1024 },
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 4 * 1024 * 1024 }, // 4MB for Vercel compatibility
   fileFilter: (req, file, cb) => {
     const allowedTypes = [
       "application/pdf",
@@ -59,9 +45,10 @@ const upload = multer({
   },
 });
 
-// Helper to get user ID from Replit Auth session
+// Helper to get user ID from Clerk auth
 function getUserId(req: Request): string | undefined {
-  return (req.user as any)?.claims?.sub;
+  const { userId } = getAuth(req);
+  return userId ?? undefined;
 }
 
 // Middleware: Require admin role
@@ -71,13 +58,13 @@ async function requireAdmin(req: Request, res: Response, next: NextFunction) {
     log("warn", "auth", "Unauthorized admin access attempt", { path: req.path });
     return res.status(401).json({ message: "Authentication required" });
   }
-  
+
   const user = await storage.getUser(userId);
   if (!user || user.role !== "admin") {
     log("warn", "auth", "Non-admin attempted admin route", { userId, path: req.path });
     return res.status(403).json({ message: "Admin access required" });
   }
-  
+
   next();
 }
 
@@ -87,18 +74,16 @@ async function checkUserActive(req: Request, res: Response, next: NextFunction) 
   if (!userId) {
     return next();
   }
-  
+
   const user = await storage.getUser(userId);
   if (user && user.status === "deactivated") {
     return res.status(403).json({ message: "Your account has been deactivated. Please contact support." });
   }
-  
+
   next();
 }
 
-async function extractText(filePath: string, fileType: string): Promise<string> {
-  const buffer = fs.readFileSync(filePath);
-
+async function extractText(buffer: Buffer, fileType: string): Promise<string> {
   if (fileType === "application/pdf") {
     const pdfParseDefault = (pdfParse as any).default || pdfParse;
     const data = await pdfParseDefault(buffer);
@@ -120,31 +105,40 @@ const PRICING_PLANS: Record<string, { price: number; revisions: number }> = {
   unlimited: { price: 1999, revisions: 50 },
 };
 
-export async function registerRoutes(
-  httpServer: Server,
-  app: Express
-): Promise<Server> {
-  // Setup Replit Auth FIRST (before other middleware)
-  await setupAuth(app);
-  registerAuthRoutes(app);
-
-  // Initialize Stripe
-  try {
-    await runMigrations({ databaseUrl: env.database.url });
-    const stripeSync = await getStripeSync();
-    const webhookBaseUrl = `https://${env.replit.domains?.split(",")[0]}`;
-    await stripeSync.findOrCreateManagedWebhook(`${webhookBaseUrl}/api/stripe/webhook`);
-    stripeSync.syncBackfill().catch(console.error);
-  } catch (error) {
-    log("error", "stripe", "Stripe initialization error", { error: String(error) });
-  }
-
+export async function registerRoutes(app: Express): Promise<void> {
   // Check user active status on all requests
   app.use(checkUserActive);
 
+  // ===== AUTH ROUTES =====
+
+  app.get("/api/auth/user", requireAuth(), async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+      // Sync user from Clerk to local DB on first access
+      let user = await authStorage.getUser(userId);
+      if (!user) {
+        const clerkUser = await clerkClient.users.getUser(userId);
+        user = await authStorage.upsertUser({
+          id: userId,
+          email: clerkUser.emailAddresses[0]?.emailAddress,
+          firstName: clerkUser.firstName,
+          lastName: clerkUser.lastName,
+          profileImageUrl: clerkUser.imageUrl,
+        });
+      }
+
+      res.json(user);
+    } catch (error) {
+      log("error", "auth", "Error fetching user", { error: String(error) });
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
   // ===== RESUME ROUTES =====
 
-  app.get("/api/resumes", isAuthenticated, async (req, res) => {
+  app.get("/api/resumes", requireAuth(), async (req, res) => {
     try {
       const userId = getUserId(req)!;
       const resumes = await storage.getResumesByUser(userId);
@@ -157,7 +151,7 @@ export async function registerRoutes(
 
   app.post(
     "/api/resumes/upload",
-    isAuthenticated,
+    requireAuth(),
     upload.single("file"),
     async (req, res) => {
       try {
@@ -169,12 +163,11 @@ export async function registerRoutes(
         log("info", "resume", "Upload attempt", { userId, filename: req.file.originalname });
 
         const extractedText = await extractText(
-          req.file.path,
+          req.file.buffer,
           req.file.mimetype
         );
 
         if (!extractedText.trim()) {
-          fs.unlinkSync(req.file.path);
           return res.status(400).json({ message: "Could not extract text from file. Please ensure the file contains readable text." });
         }
 
@@ -183,7 +176,7 @@ export async function registerRoutes(
           originalFilename: req.file.originalname,
           fileType: req.file.mimetype.includes("pdf") ? "pdf" : "docx",
           extractedText,
-          filePath: req.file.path,
+          filePath: "memory-upload",
         });
 
         await storage.trackEvent({
@@ -197,15 +190,12 @@ export async function registerRoutes(
         res.status(201).json({ resume });
       } catch (error: any) {
         log("error", "resume", "Upload error", { error: String(error) });
-        if (req.file) {
-          fs.unlinkSync(req.file.path);
-        }
         res.status(500).json({ message: error.message || "Upload failed. Please try again." });
       }
     }
   );
 
-  app.get("/api/resumes/:id", isAuthenticated, async (req, res) => {
+  app.get("/api/resumes/:id", requireAuth(), async (req, res) => {
     try {
       const userId = getUserId(req)!;
       const resumeId = req.params.id as string;
@@ -222,7 +212,7 @@ export async function registerRoutes(
 
   // ===== REVISION ROUTES =====
 
-  app.get("/api/revisions", isAuthenticated, async (req, res) => {
+  app.get("/api/revisions", requireAuth(), async (req, res) => {
     try {
       const userId = getUserId(req)!;
       const revisions = await storage.getRevisionsByUser(userId);
@@ -233,7 +223,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/revisions/:id", isAuthenticated, async (req, res) => {
+  app.get("/api/revisions/:id", requireAuth(), async (req, res) => {
     try {
       const userId = getUserId(req)!;
       const revisionId = req.params.id as string;
@@ -248,7 +238,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/revisions/tailor", isAuthenticated, async (req, res) => {
+  app.post("/api/revisions/tailor", requireAuth(), async (req, res) => {
     try {
       const userId = getUserId(req)!;
       const { resumeId, targetIndustry, targetRole } = tailorResumeSchema.parse(req.body);
@@ -319,20 +309,20 @@ export async function registerRoutes(
         return res.status(400).json({ message: error.errors[0].message });
       }
       log("error", "tailor", "Tailor error", { userId, error: String(error) });
-      
+
       await storage.trackEvent({
         eventType: "error",
         userId,
         metadata: { type: "tailor_failure", error: String(error) },
       });
-      
+
       res.status(500).json({ message: "Failed to tailor resume. Please try again." });
     }
   });
 
   // ===== PAYMENT ROUTES =====
 
-  app.post("/api/payments/checkout", isAuthenticated, async (req, res) => {
+  app.post("/api/payments/checkout", requireAuth(), async (req, res) => {
     try {
       const userId = getUserId(req)!;
       const { planId } = req.body;
@@ -349,8 +339,8 @@ export async function registerRoutes(
 
       log("info", "payment", "Checkout attempt", { userId: user.id, planId });
 
-      const stripe = await getUncachableStripeClient();
-      const baseUrl = `https://${env.replit.domains?.split(",")[0]}`;
+      const stripe = getStripeClient();
+      const baseUrl = env.app.baseUrl;
 
       let customerId = user.stripeCustomerId;
       if (!customerId) {
@@ -406,22 +396,17 @@ export async function registerRoutes(
     }
   });
 
-  // Stripe webhook handler
+  // Stripe webhook handler (no auth - Stripe sends this directly)
   app.post("/api/stripe/webhook", async (req: Request, res: Response) => {
     try {
-      const stripe = await getUncachableStripeClient();
+      const stripe = getStripeClient();
       const sig = req.headers["stripe-signature"];
 
       if (!sig) {
         return res.status(400).json({ error: "Missing signature" });
       }
 
-      const stripeSync = await getStripeSync();
       const payload = (req as any).rawBody || req.body;
-      
-      if (Buffer.isBuffer(payload)) {
-        await stripeSync.processWebhook(payload, sig as string);
-      }
 
       const event = stripe.webhooks.constructEvent(
         payload,
@@ -450,7 +435,7 @@ export async function registerRoutes(
             await storage.updateUser(userId, {
               paidRevisionsRemaining: (user.paidRevisionsRemaining || 0) + revisions,
             });
-            
+
             await storage.trackEvent({
               eventType: "payment",
               userId,
@@ -493,12 +478,12 @@ export async function registerRoutes(
     try {
       const userId = req.params.id as string;
       const { status } = updateUserStatusSchema.parse({ userId, status: req.body.status });
-      
+
       const user = await storage.updateUser(userId, { status });
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
-      
+
       log("info", "admin", "User status updated", { adminId: getUserId(req), targetUserId: userId, newStatus: status });
       res.json(user);
     } catch (error) {
@@ -563,12 +548,12 @@ export async function registerRoutes(
     try {
       const userId = getUserId(req)!;
       const data = createPromptVersionSchema.parse(req.body);
-      
+
       const prompt = await storage.createPromptVersion({
         ...data,
         createdBy: userId,
       });
-      
+
       log("info", "admin", "Prompt version created", { promptId: prompt.id, createdBy: userId });
       res.status(201).json(prompt);
     } catch (error) {
@@ -584,7 +569,7 @@ export async function registerRoutes(
     try {
       const promptId = req.params.id as string;
       await storage.setActivePromptVersion(promptId);
-      
+
       log("info", "admin", "Prompt activated", { promptId, activatedBy: getUserId(req) });
       res.json({ success: true });
     } catch (error) {
@@ -597,7 +582,7 @@ export async function registerRoutes(
     try {
       const userId = getUserId(req)!;
       const data = testPromptSchema.parse(req.body);
-      
+
       const result = await testPrompt(
         data.systemPrompt,
         data.userPromptTemplate,
@@ -605,7 +590,7 @@ export async function registerRoutes(
         data.targetIndustry,
         data.targetRole
       );
-      
+
       if (data.promptVersionId) {
         await storage.createPromptTestRun({
           promptVersionId: data.promptVersionId,
@@ -617,7 +602,7 @@ export async function registerRoutes(
           createdBy: userId,
         });
       }
-      
+
       res.json(result);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -627,6 +612,4 @@ export async function registerRoutes(
       res.status(500).json({ message: "Failed to test prompt" });
     }
   });
-
-  return httpServer;
 }

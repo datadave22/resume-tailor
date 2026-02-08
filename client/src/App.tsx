@@ -1,6 +1,7 @@
 import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { ClerkProvider } from "@clerk/clerk-react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -146,18 +147,26 @@ function Router() {
   );
 }
 
+const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
+if (!CLERK_PUBLISHABLE_KEY) {
+  throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY environment variable");
+}
+
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light">
-        <TooltipProvider>
-          <AuthProvider>
-            <Toaster />
-            <Router />
-          </AuthProvider>
-        </TooltipProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider defaultTheme="light">
+          <TooltipProvider>
+            <AuthProvider>
+              <Toaster />
+              <Router />
+            </AuthProvider>
+          </TooltipProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ClerkProvider>
   );
 }
 

@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useUser, useClerk, useAuth as useClerkAuth } from "@clerk/clerk-react";
 import type { User } from "@shared/schema";
 
 interface AuthContextType {
@@ -13,13 +14,22 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const { isLoaded: clerkLoaded, isSignedIn, getToken } = useClerkAuth();
+  const clerk = useClerk();
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
 
   const fetchUser = useCallback(async () => {
+    if (!isSignedIn) {
+      setUser(null);
+      return;
+    }
+
+    setIsFetching(true);
     try {
+      const token = await getToken();
       const res = await fetch("/api/auth/user", {
-        credentials: "include",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (res.ok) {
         const data = await res.json();
@@ -30,34 +40,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       setUser(null);
     } finally {
-      setIsLoading(false);
+      setIsFetching(false);
     }
-  }, []);
+  }, [isSignedIn, getToken]);
 
   useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
+    if (clerkLoaded) {
+      fetchUser();
+    }
+  }, [clerkLoaded, fetchUser]);
+
+  const isLoading = !clerkLoaded || (isSignedIn && isFetching && !user);
 
   const login = () => {
-    window.location.href = "/api/login";
+    clerk.openSignIn();
   };
 
   const logout = () => {
-    window.location.href = "/api/logout";
-  };
-
-  const refetchUser = async () => {
-    await fetchUser();
+    clerk.signOut();
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      isLoading, 
+    <AuthContext.Provider value={{
+      user,
+      isLoading,
       isAuthenticated: !!user,
-      login, 
-      logout, 
-      refetchUser 
+      login,
+      logout,
+      refetchUser: fetchUser,
     }}>
       {children}
     </AuthContext.Provider>

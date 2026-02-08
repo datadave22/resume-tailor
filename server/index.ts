@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import { clerkMiddleware } from "@clerk/express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -37,6 +38,9 @@ app.use(
 
 app.use(express.urlencoded({ extended: false }));
 
+// Clerk authentication middleware
+app.use(clerkMiddleware());
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -64,7 +68,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  await registerRoutes(httpServer, app);
+  await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

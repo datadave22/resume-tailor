@@ -14,3 +14,6 @@ vite.config.ts.*
 uploads/
 
 GET_STARTED.md.local/
+
+# Vercel
+.vercel

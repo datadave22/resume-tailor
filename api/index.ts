@@ -29,23 +29,29 @@ let routesRegistered = false;
 async function ensureRoutes() {
   if (!routesRegistered) {
     await registerRoutes(app);
+
+    // Error handler must be registered AFTER routes
+    app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
+      console.error("Internal Server Error:", err);
+      if (res.headersSent) {
+        return next(err);
+      }
+      return res.status(status).json({ message });
+    });
+
     routesRegistered = true;
   }
 }
 
-// Error handler
-app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
-  const status = err.status || err.statusCode || 500;
-  const message = err.message || "Internal Server Error";
-  console.error("Internal Server Error:", err);
-  if (res.headersSent) {
-    return next(err);
-  }
-  return res.status(status).json({ message });
-});
-
 // Vercel serverless handler
 export default async function handler(req: any, res: any) {
-  await ensureRoutes();
-  return app(req, res);
+  try {
+    await ensureRoutes();
+    return app(req, res);
+  } catch (error) {
+    console.error("Serverless function error:", error);
+    res.status(500).json({ message: "Internal server error", error: String(error) });
+  }
 }

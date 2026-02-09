@@ -76,7 +76,8 @@ try {
   console.error('\nENVIRONMENT CONFIGURATION ERROR\n');
   console.error(error.message);
   console.error('\nApplication cannot start without required environment variables.\n');
-  process.exit(1);
+  // Re-throw instead of process.exit() to support serverless environments
+  throw error;
 }
 
 export default env;

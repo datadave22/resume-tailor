@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { clerkMiddleware } from "@clerk/express";
+import { registerRoutes } from "../server/routes";
 
 const app = express();
 
@@ -23,11 +24,10 @@ app.use(express.urlencoded({ extended: false }));
 // Clerk authentication middleware
 app.use(clerkMiddleware());
 
-// Register all API routes (lazy loaded to catch errors)
+// Register all API routes
 let routesRegistered = false;
 async function ensureRoutes() {
   if (!routesRegistered) {
-    const { registerRoutes } = await import("../server/routes");
     await registerRoutes(app);
 
     // Error handler must be registered AFTER routes
@@ -51,9 +51,9 @@ export default async function handler(req: any, res: any) {
     await ensureRoutes();
     return app(req, res);
   } catch (error) {
-    console.error("Serverless function initialization error:", error);
+    console.error("Serverless function error:", error);
     return res.status(500).json({
-      message: "Server initialization failed",
+      message: "Server error",
       error: String(error),
     });
   }

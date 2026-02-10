@@ -12,7 +12,7 @@ import {
   updateUserStatusSchema,
   createPromptVersionSchema,
   testPromptSchema
-} from "@shared/schema";
+} from "../shared/schema";
 import { z } from "zod";
 import env from "../config/env.js";
 

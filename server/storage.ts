@@ -21,7 +21,7 @@ import {
   type InsertAnalyticsEvent,
   type PromptTestRun,
   type InsertPromptTestRun
-} from "@shared/schema";
+} from "../shared/schema";
 
 export interface IStorage {
   // Users

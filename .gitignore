@@ -17,3 +17,6 @@ GET_STARTED.md.local/
 
 # Vercel
 .vercel
+
+# Bundled API function (built by esbuild during Vercel deploy)
+api/index.mjs

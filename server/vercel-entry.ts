@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { clerkMiddleware } from "@clerk/express";
-import { registerRoutes } from "../server/routes";
+import { registerRoutes } from "./routes";
 
 const app = express();
 

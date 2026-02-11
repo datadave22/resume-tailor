@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { useUser, useClerk, useAuth as useClerkAuth } from "@clerk/clerk-react";
+import { useClerk, useAuth as useClerkAuth } from "@clerk/clerk-react";
+import { setAuthTokenGetter } from "./queryClient";
 import type { User } from "@shared/schema";
 
 interface AuthContextType {
@@ -18,6 +19,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const clerk = useClerk();
   const [user, setUser] = useState<User | null>(null);
   const [isFetching, setIsFetching] = useState(false);
+
+  // Register Clerk's getToken with the API client so all requests get Bearer tokens
+  useEffect(() => {
+    if (clerkLoaded && isSignedIn) {
+      setAuthTokenGetter(getToken);
+    } else {
+      setAuthTokenGetter(null);
+    }
+  }, [clerkLoaded, isSignedIn, getToken]);
 
   const fetchUser = useCallback(async () => {
     if (!isSignedIn) {

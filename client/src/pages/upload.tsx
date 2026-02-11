@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
+import { getAuthHeaders } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -35,9 +36,10 @@ export default function UploadPage() {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append("file", file);
+      const authHeaders = await getAuthHeaders();
 
       const xhr = new XMLHttpRequest();
-      
+
       return new Promise((resolve, reject) => {
         xhr.upload.addEventListener("progress", (e) => {
           if (e.lengthComputable) {
@@ -60,6 +62,7 @@ export default function UploadPage() {
 
         xhr.addEventListener("error", () => reject(new Error("Upload failed")));
         xhr.open("POST", "/api/resumes/upload");
+        Object.entries(authHeaders).forEach(([key, value]) => xhr.setRequestHeader(key, value));
         xhr.send(formData);
       });
     },

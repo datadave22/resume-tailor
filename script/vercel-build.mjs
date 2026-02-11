@@ -30,6 +30,15 @@ cpSync("dist/public", `${OUT}/static`, { recursive: true });
 // 3. Bundle serverless function (all deps included, no externals)
 mkdirSync(FUNC_DIR, { recursive: true });
 console.log("▸ Bundling serverless function (esbuild)…");
+
+// pdfjs-dist (used by pdf-parse) expects browser globals at load time.
+// We only use it for text extraction, so stub out rendering APIs.
+const polyfillBanner = [
+  `if(typeof globalThis.DOMMatrix==="undefined"){globalThis.DOMMatrix=class DOMMatrix{constructor(){this.a=1;this.b=0;this.c=0;this.d=1;this.e=0;this.f=0}}}`,
+  `if(typeof globalThis.ImageData==="undefined"){globalThis.ImageData=class ImageData{constructor(w,h){this.width=w;this.height=h;this.data=new Uint8ClampedArray(w*h*4)}}}`,
+  `if(typeof globalThis.Path2D==="undefined"){globalThis.Path2D=class Path2D{}}`,
+].join("");
+
 execSync(
   [
     "npx esbuild server/vercel-entry.ts",
@@ -38,11 +47,15 @@ execSync(
     "--format=cjs",
     `--outfile=${FUNC_DIR}/index.js`,
     "--minify",
+    `--banner:js=${JSON.stringify(polyfillBanner)}`,
   ].join(" "),
   { stdio: "inherit" },
 );
 
-// 4. Function runtime config
+// 4. Ensure CJS is treated as CommonJS (not affected by project "type":"module")
+writeFileSync(`${FUNC_DIR}/package.json`, JSON.stringify({ type: "commonjs" }));
+
+// 5. Function runtime config
 writeFileSync(
   `${FUNC_DIR}/.vc-config.json`,
   JSON.stringify(
@@ -57,7 +70,7 @@ writeFileSync(
   ),
 );
 
-// 5. Build Output routing config
+// 6. Build Output routing config
 writeFileSync(
   `${OUT}/config.json`,
   JSON.stringify(

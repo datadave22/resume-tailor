@@ -7,6 +7,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  authError: string | null;
   login: () => void;
   logout: () => void;
   refetchUser: () => Promise<void>;
@@ -19,6 +20,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const clerk = useClerk();
   const [user, setUser] = useState<User | null>(null);
   const [isFetching, setIsFetching] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   // Register Clerk's getToken with the API client so all requests get Bearer tokens
   useEffect(() => {
@@ -32,10 +34,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchUser = useCallback(async () => {
     if (!isSignedIn) {
       setUser(null);
+      setAuthError(null);
       return;
     }
 
     setIsFetching(true);
+    setAuthError(null);
     try {
       const token = await getToken();
       const res = await fetch("/api/auth/user", {
@@ -45,9 +49,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const data = await res.json();
         setUser(data);
       } else {
+        const errorText = await res.text().catch(() => "Unknown error");
+        console.error("Auth API error:", res.status, errorText);
+        setAuthError(`Server error (${res.status}). Please try again.`);
         setUser(null);
       }
-    } catch {
+    } catch (err) {
+      console.error("Auth fetch error:", err);
+      setAuthError("Could not connect to server. Please try again.");
       setUser(null);
     } finally {
       setIsFetching(false);
@@ -60,15 +69,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [clerkLoaded, fetchUser]);
 
-  const isLoading = !clerkLoaded || (isSignedIn && isFetching && !user);
+  const isLoading = !clerkLoaded || (isSignedIn && isFetching && !user && !authError);
 
   const login = () => {
-    clerk.openSignIn();
+    clerk.redirectToSignIn({ redirectUrl: window.location.origin + "/dashboard" });
   };
 
   const logout = () => {
     clerk.signOut();
     setUser(null);
+    setAuthError(null);
   };
 
   return (
@@ -76,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       isLoading,
       isAuthenticated: !!user,
+      authError,
       login,
       logout,
       refetchUser: fetchUser,

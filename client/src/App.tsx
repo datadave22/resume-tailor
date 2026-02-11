@@ -21,12 +21,28 @@ import AdminPromptsPage from "@/pages/admin/prompts";
 import { Loader2 } from "lucide-react";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, isLoading, login } = useAuth();
+  const { user, isLoading, authError, login, refetchUser } = useAuth();
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" data-testid="loading-spinner" />
+      </div>
+    );
+  }
+
+  if (authError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center max-w-md p-6">
+          <p className="text-destructive mb-4">{authError}</p>
+          <button onClick={() => refetchUser()} className="px-4 py-2 bg-primary text-primary-foreground rounded-md mr-2">
+            Retry
+          </button>
+          <button onClick={() => window.location.href = "/"} className="px-4 py-2 bg-secondary text-secondary-foreground rounded-md">
+            Home
+          </button>
+        </div>
       </div>
     );
   }
@@ -44,12 +60,25 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
-  const { user, isLoading, login } = useAuth();
+  const { user, isLoading, authError, login, refetchUser } = useAuth();
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" data-testid="loading-spinner" />
+      </div>
+    );
+  }
+
+  if (authError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center max-w-md p-6">
+          <p className="text-destructive mb-4">{authError}</p>
+          <button onClick={() => refetchUser()} className="px-4 py-2 bg-primary text-primary-foreground rounded-md mr-2">
+            Retry
+          </button>
+        </div>
       </div>
     );
   }
@@ -155,7 +184,11 @@ if (!CLERK_PUBLISHABLE_KEY) {
 
 function App() {
   return (
-    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
+    <ClerkProvider
+      publishableKey={CLERK_PUBLISHABLE_KEY}
+      afterSignInUrl="/dashboard"
+      afterSignUpUrl="/dashboard"
+    >
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="light">
           <TooltipProvider>

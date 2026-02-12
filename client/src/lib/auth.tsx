@@ -69,7 +69,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [clerkLoaded, fetchUser]);
 
-  const isLoading = !clerkLoaded || (isSignedIn && isFetching && !user && !authError);
+  // "Loading" whenever Clerk isn't ready OR user is signed in but we
+  // haven't resolved the local user record yet (covers the gap between
+  // Clerk redirect-back and the fetchUser useEffect firing).
+  const isLoading = !clerkLoaded || (isSignedIn && !user && !authError);
 
   const login = () => {
     clerk.redirectToSignIn({ redirectUrl: window.location.origin + "/dashboard" });

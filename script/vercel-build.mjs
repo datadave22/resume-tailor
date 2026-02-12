@@ -52,10 +52,16 @@ execSync(
   { stdio: "inherit" },
 );
 
-// 4. Ensure CJS is treated as CommonJS (not affected by project "type":"module")
+// 4. Copy pdfjs-dist worker (the bundle's dynamic import resolves to ./pdf.worker.mjs)
+cpSync(
+  "node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs",
+  `${FUNC_DIR}/pdf.worker.mjs`,
+);
+
+// 5. Ensure CJS is treated as CommonJS (not affected by project "type":"module")
 writeFileSync(`${FUNC_DIR}/package.json`, JSON.stringify({ type: "commonjs" }));
 
-// 5. Function runtime config
+// 6. Function runtime config
 writeFileSync(
   `${FUNC_DIR}/.vc-config.json`,
   JSON.stringify(
@@ -70,7 +76,7 @@ writeFileSync(
   ),
 );
 
-// 6. Build Output routing config
+// 7. Build Output routing config
 writeFileSync(
   `${OUT}/config.json`,
   JSON.stringify(

@@ -1,6 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import multer from "multer";
-import * as pdfParse from "pdf-parse";
+import { PDFParse } from "pdf-parse";
 import * as mammoth from "mammoth";
 import { storage } from "./storage";
 import { authStorage } from "./authStorage";
@@ -85,9 +85,10 @@ async function checkUserActive(req: Request, res: Response, next: NextFunction) 
 
 async function extractText(buffer: Buffer, fileType: string): Promise<string> {
   if (fileType === "application/pdf") {
-    const pdfParseDefault = (pdfParse as any).default || pdfParse;
-    const data = await pdfParseDefault(buffer);
-    return data.text;
+    const parser = new PDFParse({ data: buffer });
+    const result = await parser.getText();
+    await parser.destroy();
+    return result.text;
   } else if (
     fileType ===
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document"

@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 import { useClerk, useAuth as useClerkAuth } from "@clerk/clerk-react";
 import { setAuthTokenGetter } from "./queryClient";
 import type { User } from "@shared/schema";
@@ -74,15 +74,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Clerk redirect-back and the fetchUser useEffect firing).
   const isLoading = !clerkLoaded || (isSignedIn && !user && !authError);
 
-  const login = () => {
-    clerk.redirectToSignIn({ redirectUrl: window.location.origin + "/dashboard" });
-  };
+  const login = useCallback(() => {
+    clerk.redirectToSignIn({ fallbackRedirectUrl: "/dashboard" });
+  }, [clerk]);
 
-  const logout = () => {
+  const logout = useCallback(() => {
     clerk.signOut();
     setUser(null);
     setAuthError(null);
-  };
+  }, [clerk]);
 
   return (
     <AuthContext.Provider value={{

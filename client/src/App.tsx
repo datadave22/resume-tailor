@@ -1,4 +1,5 @@
 import { Switch, Route, Redirect } from "wouter";
+import { useEffect, useRef } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ClerkProvider } from "@clerk/clerk-react";
@@ -22,14 +23,15 @@ import { Loader2 } from "lucide-react";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading, authError, login, refetchUser } = useAuth();
+  const redirecting = useRef(false);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" data-testid="loading-spinner" />
-      </div>
-    );
-  }
+  // Redirect to sign-in as a side effect, not during render
+  useEffect(() => {
+    if (!isLoading && !authError && !user && !redirecting.current) {
+      redirecting.current = true;
+      login();
+    }
+  }, [isLoading, authError, user, login]);
 
   if (authError) {
     return (
@@ -48,7 +50,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    login();
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" data-testid="loading-spinner" />
@@ -61,14 +62,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading, authError, login, refetchUser } = useAuth();
+  const redirecting = useRef(false);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" data-testid="loading-spinner" />
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!isLoading && !authError && !user && !redirecting.current) {
+      redirecting.current = true;
+      login();
+    }
+  }, [isLoading, authError, user, login]);
 
   if (authError) {
     return (
@@ -84,7 +85,6 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    login();
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" data-testid="loading-spinner" />
@@ -186,8 +186,8 @@ function App() {
   return (
     <ClerkProvider
       publishableKey={CLERK_PUBLISHABLE_KEY}
-      afterSignInUrl="/dashboard"
-      afterSignUpUrl="/dashboard"
+      signInFallbackRedirectUrl="/dashboard"
+      signUpFallbackRedirectUrl="/dashboard"
     >
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="light">

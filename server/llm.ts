@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { storage } from "./storage";
 import env from "../config/env.js";
+import { PREMIUM_SYSTEM_ADDENDUM, PREMIUM_USER_ADDENDUM } from "./prompts/premium";
 
 const openai = new OpenAI({
   apiKey: env.openai.apiKey,
@@ -63,6 +64,7 @@ Make every bullet count. Show ownership and results.`;
 export interface TailorOptions {
   systemPrompt?: string;
   userPromptTemplate?: string;
+  isPremium?: boolean;
 }
 
 export async function tailorResume(
@@ -94,6 +96,12 @@ export async function tailorResume(
   } else {
     systemPrompt = options.systemPrompt;
     userPromptTemplate = options.userPromptTemplate || DEFAULT_USER_PROMPT_TEMPLATE;
+  }
+
+  // Upgrade prompt for paying customers
+  if (options?.isPremium) {
+    systemPrompt += PREMIUM_SYSTEM_ADDENDUM;
+    userPromptTemplate += PREMIUM_USER_ADDENDUM;
   }
 
   // Replace template variables

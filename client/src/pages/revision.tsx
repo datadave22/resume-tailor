@@ -6,15 +6,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { 
-  FileText, 
-  ArrowLeft, 
+import {
+  FileText,
+  ArrowLeft,
   Download,
   Copy,
   Check,
   Clock,
-  Briefcase,
-  Building2
+  Building2,
+  Sparkles,
+  ChevronRight
 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -44,11 +45,36 @@ export default function RevisionPage() {
 
   const handleDownload = () => {
     if (revision?.tailoredContent) {
-      const blob = new Blob([revision.tailoredContent], { type: "text/plain" });
+      const content = revision.tailoredContent;
+      // Convert plain text to formatted HTML that Word renders cleanly
+      const htmlContent = content
+        .split("\n")
+        .map((line: string) => {
+          const trimmed = line.trim();
+          if (!trimmed) return "<br/>";
+          // Section headers (all caps or ending with colon)
+          if (/^[A-Z\s&\/]{4,}$/.test(trimmed) || /^#{1,3}\s/.test(trimmed)) {
+            const headerText = trimmed.replace(/^#{1,3}\s*/, "");
+            return `<h2 style="font-size:14pt;font-weight:bold;color:#1a1a1a;margin:16pt 0 6pt 0;border-bottom:1pt solid #cccccc;padding-bottom:4pt;">${headerText}</h2>`;
+          }
+          // Bullet points
+          if (/^[-•*]\s/.test(trimmed)) {
+            return `<li style="font-size:11pt;font-family:'Calibri',sans-serif;margin:2pt 0;line-height:1.4;">${trimmed.replace(/^[-•*]\s*/, "")}</li>`;
+          }
+          return `<p style="font-size:11pt;font-family:'Calibri',sans-serif;margin:3pt 0;line-height:1.4;">${trimmed}</p>`;
+        })
+        .join("\n");
+
+      const doc = `<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>body{font-family:'Calibri',sans-serif;font-size:11pt;color:#1a1a1a;max-width:7.5in;margin:0.75in auto;line-height:1.4;}ul{padding-left:18pt;}</style>
+</head><body>${htmlContent}</body></html>`;
+
+      const blob = new Blob([doc], { type: "application/msword" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `resume-${revision.targetRole.replace(/\s+/g, "-").toLowerCase()}.txt`;
+      a.download = `resume-${revision.targetRole.replace(/\s+/g, "-").toLowerCase()}.doc`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -151,6 +177,28 @@ export default function RevisionPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {revision.wasFree && (
+              <Card className="mt-6 border-primary/20 bg-primary/5">
+                <CardContent className="py-5 px-6">
+                  <div className="flex items-start gap-3">
+                    <Sparkles className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-semibold text-sm mb-2">Upgrade for Premium Revisions</p>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Paid revisions include Harvard-style executive formatting, ATS keyword optimization,
+                        interview talking points, and a Resume Strength Score — designed to get you hired faster.
+                      </p>
+                      <Link href="/pricing">
+                        <Button size="sm" className="gap-1">
+                          View Plans <ChevronRight className="h-3 w-3" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
               <Link href="/tailor">

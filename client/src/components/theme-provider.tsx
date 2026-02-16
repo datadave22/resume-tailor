@@ -12,7 +12,7 @@ const ThemeProviderContext = createContext<ThemeProviderContextType | undefined>
 export function ThemeProvider({
   children,
   defaultTheme = "system",
-  storageKey = "resume-tailor-theme",
+  storageKey = "resume-polish-theme",
 }: {
   children: React.ReactNode;
   defaultTheme?: Theme;

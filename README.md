@@ -1,4 +1,4 @@
-# ResumeTailor
+# ResumePolish
 
 > AI-powered resume tailoring for modern job seekers. Transform your resume for any industry in 30 seconds.
 
@@ -10,18 +10,18 @@
 
 ---
 
-## 🎯 What is ResumeTailor?
+## 🎯 What is ResumePolish?
 
-ResumeTailor is a production-ready SaaS platform that uses **OpenAI's GPT-4o** to intelligently optimize resumes for specific industries and roles. Job seekers upload their resume once, then instantly generate tailored versions for each application - reducing tailoring time from 2-3 hours to **30 seconds**.
+ResumePolish is a production-ready SaaS platform that uses **OpenAI's GPT-4o** to intelligently optimize resumes for specific industries and roles. Job seekers upload their resume once, then instantly generate tailored versions for each application - reducing tailoring time from 2-3 hours to **30 seconds**.
 
-**Live Demo**: [View Application](https://d59ed8ef-af8d-403f-85ab-404274b3f076-00-3yj8tacfyq0c.picard.replit.dev/)
+**Live Demo**: [View Application](https://resumepolish.io)
 
 ---
 
 ## ✨ Key Features
 
 - 🤖 **AI-Powered Tailoring**: GPT-4o optimizes resumes for specific industries and roles
-- 🔐 **Enterprise Authentication**: Multi-provider OAuth (Google, GitHub, X, Apple, Email) via Replit Auth
+- 🔐 **Enterprise Authentication**: Multi-provider OAuth (Google, GitHub, Apple, Email) via Clerk
 - 💳 **Secure Payments**: Stripe integration with webhook-based confirmation
 - 📊 **Admin Dashboard**: Analytics, user management, and AI prompt versioning
 - 🎨 **Modern UI**: Built with React, TailwindCSS, and shadcn/ui components
@@ -108,8 +108,8 @@ ResumeTailor is a production-ready SaaS platform that uses **OpenAI's GPT-4o** t
 
 ```bash
 # Clone repository
-git clone https://github.com/YOUR_USERNAME/resumetailor.git
-cd resumetailor
+git clone https://github.com/YOUR_USERNAME/resumepolish.git
+cd resumepolish
 
 # Install dependencies
 npm install
@@ -134,7 +134,7 @@ Create `.env` file with these variables:
 
 ```env
 # Database
-DATABASE_URL=postgresql://localhost:5432/resumetailor
+DATABASE_URL=postgresql://localhost:5432/resumepolish
 
 # Session (generate: openssl rand -base64 32)
 SESSION_SECRET=your-super-secret-key-here
@@ -218,7 +218,7 @@ Operational tooling for monitoring and management:
 ## 📊 Project Structure
 
 ```
-resumetailor/
+resumepolish/
 ├── client/                 # React frontend
 │   ├── src/
 │   │   ├── components/    # Reusable UI components
@@ -411,10 +411,10 @@ This project is licensed under the MIT License - see the [LICENSE](./LICENSE) fi
 
 ## 📊 Project Stats
 
-![GitHub stars](https://img.shields.io/github/stars/YOUR_USERNAME/resumetailor?style=social)
-![GitHub forks](https://img.shields.io/github/forks/YOUR_USERNAME/resumetailor?style=social)
-![GitHub issues](https://img.shields.io/github/issues/YOUR_USERNAME/resumetailor)
-![GitHub last commit](https://img.shields.io/github/last-commit/YOUR_USERNAME/resumetailor)
+![GitHub stars](https://img.shields.io/github/stars/YOUR_USERNAME/resumepolish?style=social)
+![GitHub forks](https://img.shields.io/github/forks/YOUR_USERNAME/resumepolish?style=social)
+![GitHub issues](https://img.shields.io/github/issues/YOUR_USERNAME/resumepolish)
+![GitHub last commit](https://img.shields.io/github/last-commit/YOUR_USERNAME/resumepolish)
 
 ---
 

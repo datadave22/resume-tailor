@@ -49,7 +49,7 @@ export default function DashboardPage() {
             <div className="p-1.5 sm:p-2 bg-primary rounded-md sm:rounded-lg">
               <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-sm sm:text-lg">ResumeTailor</span>
+            <span className="font-bold text-sm sm:text-lg">ResumePolish</span>
           </div>
           <div className="flex items-center gap-1 sm:gap-2">
             {user.role === "admin" && (

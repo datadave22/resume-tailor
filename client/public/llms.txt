@@ -1,0 +1,36 @@
+# ResumePolish
+
+> AI-powered resume optimization for job seekers. Transform your resume for any job in 30 seconds.
+
+ResumePolish is a web application at https://resumepolish.io that uses OpenAI's GPT-4o to optimize resumes for specific industries and job roles.
+
+## What it does
+
+- Users upload a resume (PDF or DOCX)
+- Select a target industry and job role
+- AI rewrites the resume optimized for that specific position
+- Premium users get Harvard-style executive formatting, ATS keyword optimization, interview talking points, and a Resume Strength Score
+
+## Pricing
+
+- Free: 3 AI resume revisions (no credit card required)
+- Starter: $4.99 for 5 premium revisions
+- Professional: $9.99 for 15 premium revisions (best value)
+- Power User: $19.99 for 50 premium revisions
+
+## Premium features
+
+- Harvard Business School / MIT resume formatting
+- ATS (Applicant Tracking System) keyword optimization
+- CAR format bullets (Challenge, Action, Result)
+- Professional Summary generation
+- Interview talking points based on resume content
+- Resume Strength Score (1-10)
+
+## How to use
+
+1. Visit https://resumepolish.io
+2. Sign up for free
+3. Upload your resume
+4. Select your target industry and role
+5. Get your AI-optimized resume in 30 seconds

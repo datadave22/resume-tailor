@@ -51,7 +51,7 @@ export default function LandingPage() {
             <div className="p-1.5 sm:p-2 bg-primary rounded-md sm:rounded-lg">
               <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
             </div>
-            <span className="font-bold text-sm sm:text-lg">ResumeTailor</span>
+            <span className="font-bold text-sm sm:text-lg">ResumePolish</span>
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
@@ -118,7 +118,7 @@ export default function LandingPage() {
             <div className="max-w-4xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                 <div>
-                  <h2 className="text-3xl font-bold mb-6">Why Choose ResumeTailor?</h2>
+                  <h2 className="text-3xl font-bold mb-6">Why Choose ResumePolish?</h2>
                   <p className="text-muted-foreground mb-8">
                     Our AI analyzes your resume and optimizes it for specific industries and roles, 
                     ensuring you highlight the most relevant skills and experiences.
@@ -139,7 +139,7 @@ export default function LandingPage() {
                         <FileText className="h-5 w-5 text-primary-foreground" />
                       </div>
                       <div>
-                        <p className="font-medium">resume_tailored.pdf</p>
+                        <p className="font-medium">resume_polished.pdf</p>
                         <p className="text-sm text-muted-foreground">Optimized for: Software Engineer</p>
                       </div>
                     </div>
@@ -168,7 +168,7 @@ export default function LandingPage() {
             </div>
             <h2 className="text-3xl font-bold mb-4">Ready to Stand Out?</h2>
             <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
-              Join thousands of job seekers who've improved their resumes with ResumeTailor.
+              Join thousands of job seekers who've improved their resumes with ResumePolish.
             </p>
             <Button size="lg" className="text-lg px-8" onClick={login} data-testid="button-cta">
               Start Tailoring Now
@@ -185,7 +185,7 @@ export default function LandingPage() {
               <div className="p-1.5 bg-primary rounded">
                 <FileText className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="font-semibold">ResumeTailor</span>
+              <span className="font-semibold">ResumePolish</span>
             </div>
             <p className="text-sm text-muted-foreground">
               AI-powered resume optimization for your dream job.

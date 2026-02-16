@@ -150,7 +150,7 @@ async function showStats() {
 
 function showHelp() {
   console.log(`
-ResumeTailor Admin CLI
+ResumePolish Admin CLI
 ======================
 
 Usage: npx tsx scripts/admin-cli.ts <command> [args]

@@ -362,7 +362,7 @@ export async function registerRoutes(app: Express): Promise<void> {
             price_data: {
               currency: "usd",
               product_data: {
-                name: `ResumeTailor - ${plan.revisions} Revisions`,
+                name: `ResumePolish - ${plan.revisions} Revisions`,
                 description: `${plan.revisions} AI-powered resume revisions`,
               },
               unit_amount: plan.price,

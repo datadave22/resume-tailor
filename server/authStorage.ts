@@ -27,9 +27,11 @@ class AuthStorage implements IAuthStorage {
         );
 
       if (existingByEmail) {
+        // Update the user ID to match the new auth provider ID (e.g. Clerk dev → production migration)
         const [updated] = await db
           .update(users)
           .set({
+            id: userData.id,
             firstName: userData.firstName || existingByEmail.firstName,
             lastName: userData.lastName || existingByEmail.lastName,
             profileImageUrl: userData.profileImageUrl || existingByEmail.profileImageUrl,

@@ -1,4 +1,5 @@
 import { users, type User, type UpsertUser } from "../shared/models/auth";
+import { resumes, revisions, payments, promptVersions, analyticsEvents, promptTestRuns } from "../shared/schema";
 import { db } from "./db";
 import { eq, and, ne } from "drizzle-orm";
 
@@ -27,19 +28,34 @@ class AuthStorage implements IAuthStorage {
         );
 
       if (existingByEmail) {
-        // Update the user ID to match the new auth provider ID (e.g. Clerk dev → production migration)
-        const [updated] = await db
-          .update(users)
-          .set({
-            id: userData.id,
-            firstName: userData.firstName || existingByEmail.firstName,
-            lastName: userData.lastName || existingByEmail.lastName,
-            profileImageUrl: userData.profileImageUrl || existingByEmail.profileImageUrl,
-            lastLoginAt: new Date(),
-            updatedAt: new Date(),
-          })
-          .where(eq(users.id, existingByEmail.id))
-          .returning();
+        // Migrate user ID (e.g. Clerk dev → production) in a transaction
+        // Must update all foreign key references before changing the primary key
+        const oldId = existingByEmail.id;
+        const newId = userData.id;
+
+        const [updated] = await db.transaction(async (tx) => {
+          // Update all tables that reference users.id
+          await tx.update(resumes).set({ userId: newId }).where(eq(resumes.userId, oldId));
+          await tx.update(revisions).set({ userId: newId }).where(eq(revisions.userId, oldId));
+          await tx.update(payments).set({ userId: newId }).where(eq(payments.userId, oldId));
+          await tx.update(analyticsEvents).set({ userId: newId }).where(eq(analyticsEvents.userId, oldId));
+          await tx.update(promptVersions).set({ createdBy: newId }).where(eq(promptVersions.createdBy, oldId));
+          await tx.update(promptTestRuns).set({ createdBy: newId }).where(eq(promptTestRuns.createdBy, oldId));
+
+          // Now update the user record itself
+          return tx
+            .update(users)
+            .set({
+              id: newId,
+              firstName: userData.firstName || existingByEmail.firstName,
+              lastName: userData.lastName || existingByEmail.lastName,
+              profileImageUrl: userData.profileImageUrl || existingByEmail.profileImageUrl,
+              lastLoginAt: new Date(),
+              updatedAt: new Date(),
+            })
+            .where(eq(users.id, oldId))
+            .returning();
+        });
         return updated;
       }
     }

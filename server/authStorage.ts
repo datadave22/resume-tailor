@@ -1,7 +1,6 @@
 import { users, type User, type UpsertUser } from "../shared/models/auth";
-import { resumes, revisions, payments, promptVersions, analyticsEvents, promptTestRuns } from "../shared/schema";
 import { db } from "./db";
-import { eq, and, ne } from "drizzle-orm";
+import { eq, and, ne, sql } from "drizzle-orm";
 
 export interface IAuthStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -29,21 +28,20 @@ class AuthStorage implements IAuthStorage {
 
       if (existingByEmail) {
         // Migrate user ID (e.g. Clerk dev → production) in a transaction
-        // Must update all foreign key references before changing the primary key
+        // Update all foreign key references before changing the primary key
         const oldId = existingByEmail.id;
         const newId = userData.id;
 
-        const [updated] = await db.transaction(async (tx) => {
-          // Update all tables that reference users.id
-          await tx.update(resumes).set({ userId: newId }).where(eq(resumes.userId, oldId));
-          await tx.update(revisions).set({ userId: newId }).where(eq(revisions.userId, oldId));
-          await tx.update(payments).set({ userId: newId }).where(eq(payments.userId, oldId));
-          await tx.update(analyticsEvents).set({ userId: newId }).where(eq(analyticsEvents.userId, oldId));
-          await tx.update(promptVersions).set({ createdBy: newId }).where(eq(promptVersions.createdBy, oldId));
-          await tx.update(promptTestRuns).set({ createdBy: newId }).where(eq(promptTestRuns.createdBy, oldId));
+        await db.execute(sql`BEGIN`);
+        try {
+          await db.execute(sql`UPDATE resumes SET user_id = ${newId} WHERE user_id = ${oldId}`);
+          await db.execute(sql`UPDATE revisions SET user_id = ${newId} WHERE user_id = ${oldId}`);
+          await db.execute(sql`UPDATE payments SET user_id = ${newId} WHERE user_id = ${oldId}`);
+          await db.execute(sql`UPDATE analytics_events SET user_id = ${newId} WHERE user_id = ${oldId}`);
+          await db.execute(sql`UPDATE prompt_versions SET created_by = ${newId} WHERE created_by = ${oldId}`);
+          await db.execute(sql`UPDATE prompt_test_runs SET created_by = ${newId} WHERE created_by = ${oldId}`);
 
-          // Now update the user record itself
-          return tx
+          const [updated] = await db
             .update(users)
             .set({
               id: newId,
@@ -55,8 +53,13 @@ class AuthStorage implements IAuthStorage {
             })
             .where(eq(users.id, oldId))
             .returning();
-        });
-        return updated;
+
+          await db.execute(sql`COMMIT`);
+          return updated;
+        } catch (error) {
+          await db.execute(sql`ROLLBACK`);
+          throw error;
+        }
       }
     }
 

@@ -267,7 +267,8 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(404).json({ message: "Resume not found" });
       }
 
-      const wasFree = freeRevisionsLeft > 0;
+      // Paid credits take priority — paying customers should always get premium quality
+      const wasFree = paidRevisionsLeft <= 0 && freeRevisionsLeft > 0;
 
       const { content: tailoredContent, promptVersionId } = await tailorResume(
         resume.extractedText,

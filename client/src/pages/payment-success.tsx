@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Link, useLocation, useSearch } from "wouter";
+import confetti from "canvas-confetti";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,10 +9,48 @@ import { CheckCircle2, Sparkles, ArrowRight, FileText } from "lucide-react";
 export default function PaymentSuccessPage() {
   const { refetchUser } = useAuth();
   const searchParams = useSearch();
+  const confettiFired = useRef(false);
 
   useEffect(() => {
     refetchUser();
   }, [refetchUser]);
+
+  useEffect(() => {
+    if (confettiFired.current) return;
+    confettiFired.current = true;
+
+    // Initial burst from both sides
+    const end = Date.now() + 1500;
+    const colors = ["#6366f1", "#8b5cf6", "#a855f7", "#22c55e", "#eab308", "#f97316"];
+
+    (function frame() {
+      confetti({
+        particleCount: 3,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0, y: 0.6 },
+        colors,
+      });
+      confetti({
+        particleCount: 3,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1, y: 0.6 },
+        colors,
+      });
+      if (Date.now() < end) requestAnimationFrame(frame);
+    })();
+
+    // Big center burst
+    setTimeout(() => {
+      confetti({
+        particleCount: 100,
+        spread: 100,
+        origin: { y: 0.5 },
+        colors,
+      });
+    }, 300);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">

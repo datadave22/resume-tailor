@@ -94,8 +94,15 @@ async function extractText(buffer: Buffer, fileType: string): Promise<string> {
     fileType ===
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
   ) {
-    const result = await mammoth.extractRawText({ buffer });
-    return result.value;
+    try {
+      const result = await mammoth.extractRawText({ buffer });
+      return result.value;
+    } catch (err: any) {
+      if (err.message?.includes("zip") || err.message?.includes("central directory")) {
+        throw new Error("This DOCX file appears to be corrupted or in an unsupported format. Please upload your original resume file, not a file downloaded from ResumePolish.");
+      }
+      throw err;
+    }
   }
 
   throw new Error("Unsupported file type");

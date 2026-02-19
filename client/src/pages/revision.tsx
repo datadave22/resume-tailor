@@ -70,11 +70,11 @@ export default function RevisionPage() {
 <style>body{font-family:'Calibri',sans-serif;font-size:11pt;color:#1a1a1a;max-width:7.5in;margin:0.75in auto;line-height:1.4;}ul{padding-left:18pt;}</style>
 </head><body>${htmlContent}</body></html>`;
 
-      const blob = new Blob([doc], { type: "application/msword" });
+      const blob = new Blob([doc], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `resume-${revision.targetRole.replace(/\s+/g, "-").toLowerCase()}.doc`;
+      a.download = `resume-${revision.targetRole.replace(/\s+/g, "-").toLowerCase()}.docx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -186,8 +186,9 @@ export default function RevisionPage() {
                     <div className="flex-1">
                       <p className="font-semibold text-sm mb-2">Upgrade for Premium Revisions</p>
                       <p className="text-xs text-muted-foreground mb-3">
-                        Paid revisions include Harvard-style executive formatting, ATS keyword optimization,
-                        interview talking points, and a Resume Strength Score — designed to get you hired faster.
+                        Paid revisions use Fortune 500-standard formatting, aggressive ATS keyword matching,
+                        humanized language that reads naturally to both recruiters and scanners, interview
+                        talking points, and a Resume Strength Score — built to get you hired faster.
                       </p>
                       <Link href="/pricing">
                         <Button size="sm" className="gap-1">

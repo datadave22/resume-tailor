@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,6 +31,7 @@ const tailorFormSchema = z.object({
   resumeId: z.string().min(1, "Please select a resume"),
   targetIndustry: z.string().min(1, "Please select an industry"),
   targetRole: z.string().min(1, "Please enter a job role"),
+  jobDescription: z.string().optional(),
 });
 
 type TailorFormData = z.infer<typeof tailorFormSchema>;
@@ -68,6 +70,7 @@ export default function TailorPage() {
       resumeId: "",
       targetIndustry: "",
       targetRole: "",
+      jobDescription: "",
     },
   });
 
@@ -258,6 +261,31 @@ export default function TailorPage() {
                               {...field}
                             />
                           </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="jobDescription"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>
+                            Job Description{" "}
+                            <span className="text-muted-foreground font-normal">(Optional — highly recommended)</span>
+                          </FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Paste the full job posting here. The AI will extract exact keywords, requirements, and company language to tailor your resume specifically to this role."
+                              className="min-h-[140px] resize-y text-sm"
+                              data-testid="textarea-job-description"
+                              {...field}
+                            />
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground">
+                            Providing the job posting produces a significantly more targeted result than industry/role alone.
+                          </p>
                           <FormMessage />
                         </FormItem>
                       )}

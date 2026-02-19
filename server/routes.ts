@@ -243,9 +243,9 @@ export async function registerRoutes(app: Express): Promise<void> {
   app.post("/api/revisions/tailor", requireAuth(), async (req, res) => {
     try {
       const userId = getUserId(req)!;
-      const { resumeId, targetIndustry, targetRole } = tailorResumeSchema.parse(req.body);
+      const { resumeId, targetIndustry, targetRole, jobDescription } = tailorResumeSchema.parse(req.body);
 
-      log("info", "tailor", "Tailor attempt", { userId, resumeId, targetIndustry, targetRole });
+      log("info", "tailor", "Tailor attempt", { userId, resumeId, targetIndustry, targetRole, hasJobDescription: !!jobDescription });
 
       const user = await storage.getUser(userId);
       if (!user) {
@@ -275,7 +275,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         resume.extractedText,
         targetIndustry,
         targetRole,
-        { isPremium: !wasFree }
+        { isPremium: !wasFree, jobDescription }
       );
 
       if (wasFree) {
@@ -293,6 +293,7 @@ export async function registerRoutes(app: Express): Promise<void> {
         userId,
         targetIndustry,
         targetRole,
+        jobDescription,
         tailoredContent,
         wasFree,
         promptVersionId,

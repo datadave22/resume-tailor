@@ -65,6 +65,7 @@ export interface TailorOptions {
   systemPrompt?: string;
   userPromptTemplate?: string;
   isPremium?: boolean;
+  jobDescription?: string;
 }
 
 export async function tailorResume(
@@ -104,11 +105,26 @@ export async function tailorResume(
     userPromptTemplate += PREMIUM_USER_ADDENDUM;
   }
 
+  // When a job description is provided, override the generic template with a job-specific one
+  if (options?.jobDescription) {
+    userPromptTemplate = `JOB DESCRIPTION (use this as your primary target):
+{{jobDescription}}
+
+ORIGINAL RESUME:
+{{resumeText}}
+
+Tailor this resume specifically to match the job description above.
+Extract every required skill, preferred qualification, and keyword from the posting.
+Mirror the company's language where authentic. Target role: {{targetRole}} in {{targetIndustry}}.
+Make every bullet point speak directly to what this employer is asking for.`;
+  }
+
   // Replace template variables
   const userPrompt = userPromptTemplate
     .replace(/\{\{targetIndustry\}\}/g, targetIndustry)
     .replace(/\{\{targetRole\}\}/g, targetRole)
-    .replace(/\{\{resumeText\}\}/g, resumeText);
+    .replace(/\{\{resumeText\}\}/g, resumeText)
+    .replace(/\{\{jobDescription\}\}/g, options?.jobDescription || "");
 
   const startTime = Date.now();
   

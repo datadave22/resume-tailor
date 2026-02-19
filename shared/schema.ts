@@ -27,6 +27,7 @@ export const revisions = pgTable("revisions", {
   userId: varchar("user_id", { length: 36 }).notNull().references(() => users.id, { onDelete: "cascade" }),
   targetIndustry: text("target_industry").notNull(),
   targetRole: text("target_role").notNull(),
+  jobDescription: text("job_description"),
   tailoredContent: text("tailored_content").notNull(),
   wasFree: boolean("was_free").notNull().default(true),
   promptVersionId: varchar("prompt_version_id", { length: 36 }),
@@ -96,6 +97,7 @@ export const insertRevisionSchema = createInsertSchema(revisions).pick({
   userId: true,
   targetIndustry: true,
   targetRole: true,
+  jobDescription: true,
   tailoredContent: true,
   wasFree: true,
   promptVersionId: true,
@@ -142,6 +144,7 @@ export const tailorResumeSchema = z.object({
   resumeId: z.string().min(1, "Resume is required"),
   targetIndustry: z.string().min(1, "Industry is required"),
   targetRole: z.string().min(1, "Job role is required"),
+  jobDescription: z.string().optional(),
 });
 
 // Admin schemas

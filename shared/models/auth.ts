@@ -24,6 +24,8 @@ export const users = pgTable("users", {
   freeRevisionsUsed: integer("free_revisions_used").notNull().default(0),
   paidRevisionsRemaining: integer("paid_revisions_remaining").notNull().default(0),
   stripeCustomerId: text("stripe_customer_id"),
+  subscriptionStatus: text("subscription_status"), // null | "active" | "canceled" | "past_due"
+  subscriptionId: text("subscription_id"),
   lastLoginAt: timestamp("last_login_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

@@ -46,6 +46,7 @@ export interface IStorage {
   getAllRevisions(): Promise<Revision[]>;
   createRevision(revision: InsertRevision): Promise<Revision>;
   getRevisionCount(): Promise<number>;
+  countRevisionsByUserSince(userId: string, since: Date): Promise<number>;
   
   // Payments
   getPayment(id: string): Promise<Payment | undefined>;
@@ -163,6 +164,14 @@ export class DatabaseStorage implements IStorage {
 
   async getRevisionCount(): Promise<number> {
     const [result] = await db.select({ count: count() }).from(revisions);
+    return result?.count || 0;
+  }
+
+  async countRevisionsByUserSince(userId: string, since: Date): Promise<number> {
+    const [result] = await db
+      .select({ count: count() })
+      .from(revisions)
+      .where(and(eq(revisions.userId, userId), gte(revisions.createdAt, since)));
     return result?.count || 0;
   }
 

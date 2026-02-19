@@ -37,9 +37,10 @@ export default function DashboardPage() {
     ? `${user.firstName}${user.lastName ? ' ' + user.lastName : ''}`
     : user.email || 'User';
 
-  const freeRevisionsLeft = 3 - (user.freeRevisionsUsed || 0);
+  const isSubscribed = user.subscriptionStatus === "active";
+  const freeRevisionsLeft = 1 - (user.freeRevisionsUsed || 0);
   const totalRevisionsLeft = freeRevisionsLeft + (user.paidRevisionsRemaining || 0);
-  const hasRevisions = totalRevisionsLeft > 0;
+  const hasRevisions = isSubscribed || totalRevisionsLeft > 0;
 
   return (
     <div className="min-h-screen bg-background">

@@ -110,8 +110,6 @@ async function extractText(buffer: Buffer, fileType: string): Promise<string> {
 
 const PRICING_PLANS: Record<string, { price: number; revisions: number }> = {
   basic: { price: 499, revisions: 5 },
-  professional: { price: 999, revisions: 15 },
-  unlimited: { price: 1999, revisions: 50 },
 };
 
 export async function registerRoutes(app: Express): Promise<void> {
@@ -259,15 +257,30 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(401).json({ message: "User not found" });
       }
 
-      const freeRevisionsLeft = 3 - (user.freeRevisionsUsed || 0);
+      const isSubscribed = user.subscriptionStatus === "active";
+      const freeRevisionsLeft = 1 - (user.freeRevisionsUsed || 0);
       const paidRevisionsLeft = user.paidRevisionsRemaining || 0;
       const totalRevisionsLeft = freeRevisionsLeft + paidRevisionsLeft;
 
-      if (totalRevisionsLeft <= 0) {
+      if (!isSubscribed && totalRevisionsLeft <= 0) {
         log("warn", "tailor", "No revisions remaining", { userId });
         return res.status(403).json({
           message: "You've used all your revisions. Purchase more to continue tailoring your resume.",
         });
+      }
+
+      // Abuse safeguard: cap subscribers at 25 tailors per day
+      const DAILY_CAP = 25;
+      if (isSubscribed) {
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const todayCount = await storage.countRevisionsByUserSince(userId, startOfDay);
+        if (todayCount >= DAILY_CAP) {
+          log("warn", "tailor", "Daily cap hit", { userId, todayCount });
+          return res.status(429).json({
+            message: `You've reached the daily limit of ${DAILY_CAP} revisions. Resets at midnight.`,
+          });
+        }
       }
 
       const resume = await storage.getResume(resumeId);
@@ -275,17 +288,20 @@ export async function registerRoutes(app: Express): Promise<void> {
         return res.status(404).json({ message: "Resume not found" });
       }
 
-      // Paid credits take priority — paying customers should always get premium quality
-      const wasFree = paidRevisionsLeft <= 0 && freeRevisionsLeft > 0;
+      // Subscribers get unlimited premium tailoring — no deduction needed
+      // For non-subscribers: paid credits take priority over free
+      const wasFree = !isSubscribed && paidRevisionsLeft <= 0 && freeRevisionsLeft > 0;
 
       const { content: tailoredContent, promptVersionId } = await tailorResume(
         resume.extractedText,
         targetIndustry,
         targetRole,
-        { isPremium: !wasFree, jobDescription }
+        { isPremium: isSubscribed || !wasFree, jobDescription }
       );
 
-      if (wasFree) {
+      if (isSubscribed) {
+        // No deduction for subscribers
+      } else if (wasFree) {
         await storage.updateUser(user.id, {
           freeRevisionsUsed: (user.freeRevisionsUsed || 0) + 1,
         });
@@ -408,6 +424,62 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  app.post("/api/payments/subscribe", requireAuth(), async (req, res) => {
+    try {
+      const userId = getUserId(req)!;
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      if (user.subscriptionStatus === "active") {
+        return res.status(400).json({ message: "You already have an active Pro subscription." });
+      }
+
+      log("info", "payment", "Subscribe attempt", { userId: user.id });
+
+      const stripe = getStripeClient();
+      const baseUrl = env.app.baseUrl;
+
+      let customerId = user.stripeCustomerId;
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user.email || undefined,
+          metadata: { userId: user.id },
+        });
+        await storage.updateUser(user.id, { stripeCustomerId: customer.id });
+        customerId = customer.id;
+      }
+
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              product_data: { name: "ResumePolish Pro — Unlimited Revisions" },
+              unit_amount: 799,
+              recurring: { interval: "month" },
+            },
+            quantity: 1,
+          },
+        ],
+        mode: "subscription",
+        success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}&sub=1`,
+        cancel_url: `${baseUrl}/checkout/cancel`,
+        metadata: { userId: user.id, type: "subscription" },
+      });
+
+      log("info", "payment", "Subscribe session created", { userId: user.id, sessionId: session.id });
+
+      res.json({ url: session.url });
+    } catch (error) {
+      log("error", "payment", "Subscribe checkout error", { error: String(error) });
+      res.status(500).json({ message: "Failed to create subscription checkout. Please try again." });
+    }
+  });
+
   // Stripe webhook handler (no auth - Stripe sends this directly)
   app.post("/api/stripe/webhook", async (req: Request, res: Response) => {
     try {
@@ -433,6 +505,7 @@ export async function registerRoutes(app: Express): Promise<void> {
 
         log("info", "payment", "Checkout completed", { userId, revisions, sessionId: session.id });
 
+        // One-time purchase: grant revisions
         if (userId && revisions > 0) {
           const payment = await storage.getPaymentBySessionId(session.id);
           if (payment) {
@@ -454,6 +527,50 @@ export async function registerRoutes(app: Express): Promise<void> {
               metadata: { revisions, amount: session.amount_total },
             });
           }
+        }
+      }
+
+      if (event.type === "customer.subscription.created" || event.type === "customer.subscription.updated") {
+        const sub = event.data.object as any;
+        const stripe = getStripeClient();
+        const customer = await stripe.customers.retrieve(sub.customer) as any;
+        const userId = customer.metadata?.userId;
+
+        log("info", "payment", "Subscription event", { event: event.type, userId, status: sub.status, subId: sub.id });
+
+        if (userId) {
+          await storage.updateUser(userId, {
+            subscriptionStatus: sub.status,
+            subscriptionId: sub.id,
+          });
+
+          await storage.trackEvent({
+            eventType: "subscription",
+            userId,
+            metadata: { event: event.type, status: sub.status },
+          });
+        }
+      }
+
+      if (event.type === "customer.subscription.deleted") {
+        const sub = event.data.object as any;
+        const stripe = getStripeClient();
+        const customer = await stripe.customers.retrieve(sub.customer) as any;
+        const userId = customer.metadata?.userId;
+
+        log("info", "payment", "Subscription canceled", { userId, subId: sub.id });
+
+        if (userId) {
+          await storage.updateUser(userId, {
+            subscriptionStatus: "canceled",
+            subscriptionId: null,
+          });
+
+          await storage.trackEvent({
+            eventType: "subscription",
+            userId,
+            metadata: { event: "canceled" },
+          });
         }
       }
 

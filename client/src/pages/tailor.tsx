@@ -99,9 +99,10 @@ export default function TailorPage() {
 
   if (!user) return null;
 
-  const freeRevisionsLeft = 3 - (user.freeRevisionsUsed || 0);
+  const isSubscribed = user.subscriptionStatus === "active";
+  const freeRevisionsLeft = 1 - (user.freeRevisionsUsed || 0);
   const totalRevisionsLeft = freeRevisionsLeft + (user.paidRevisionsRemaining || 0);
-  const hasRevisions = totalRevisionsLeft > 0;
+  const hasRevisions = isSubscribed || totalRevisionsLeft > 0;
 
   const onSubmit = (data: TailorFormData) => {
     tailorMutation.mutate(data);
@@ -162,10 +163,19 @@ export default function TailorPage() {
                 <span className="font-medium">Revisions remaining:</span>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="default">{totalRevisionsLeft}</Badge>
-                <span className="text-sm text-muted-foreground">
-                  ({freeRevisionsLeft > 0 ? `${freeRevisionsLeft} free` : "paid only"})
-                </span>
+                {isSubscribed ? (
+                  <>
+                    <Badge variant="default">∞</Badge>
+                    <span className="text-sm text-muted-foreground">Pro subscriber</span>
+                  </>
+                ) : (
+                  <>
+                    <Badge variant="default">{totalRevisionsLeft}</Badge>
+                    <span className="text-sm text-muted-foreground">
+                      ({freeRevisionsLeft > 0 ? `${freeRevisionsLeft} free` : "paid only"})
+                    </span>
+                  </>
+                )}
               </div>
             </div>
 
